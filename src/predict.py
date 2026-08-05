@@ -1,12 +1,15 @@
-"""Pipeline: language detect → (translate EN→KM) → HF sentiment → 3-class."""
+"""Pipeline: language detect → 3-class local sentiment → 3-class label.
 
-from src.common.config import MODEL
-from src.models.hf_api import classify_khmer
-from src.models.translate_baseline import translate_en_to_km
+Production path uses the fine-tuned `models/khmer-sentiment-3class` model
+(xlm-roberta) which handles Khmer / English / code-switched natively —
+no EN→KM translation and no neutral-threshold rule needed.
+"""
+
+from src.models.local_model import predict as local_predict
 from src.preprocessing.language_detect import detect_language
 from src.common import db as common_db
 
-THRESHOLD = float(MODEL["neutral_threshold"])
+LABELS = ("negative", "neutral", "positive")
 
 
 def predict_sentiment(text):
@@ -19,25 +22,18 @@ def predict_sentiment(text):
             "translated_text": None,
         }
     lang = detect_language(text)
-    translated = None
-    model_input = text
-    if lang == "english":
-        translated = translate_en_to_km(text)
-        model_input = translated
     try:
-        label, score = classify_khmer(model_input)
+        label, score = local_predict(text)
     except Exception:
-        label, score = "Negative", 0.0
-    label = label.lower().strip()
-    if label not in ("positive", "negative"):
-        label = "negative"
-    sentiment = label if score >= THRESHOLD else "neutral"
+        label, score = "neutral", 0.0
+    if label not in LABELS:
+        label = "neutral"
     return {
         "text": text,
         "language": lang,
-        "sentiment": sentiment,
+        "sentiment": label,
         "confidence": score,
-        "translated_text": translated,
+        "translated_text": None,
     }
 
 

@@ -20,12 +20,13 @@ preprocessing:
 
 model:
   hf_model: tykea/khmer-text-sentiment-analysis-roberta
+  local_model_path: models/khmer-sentiment-3class
   api_host: https://api-inference.huggingface.co
   neutral_threshold: 0.60
   max_retries: 2
   timeout_seconds: 30
   use_local_fallback: true
-  local_max_length: 512
+  local_max_length: 256
 
 aspect_model:
   hf_model: songhieng/khmer-xlmr-base-sentimental-multi-label

@@ -32,7 +32,7 @@ psql -U postgres -h localhost -f src/db/schema.sql
 | Phase 2 — Train 3-class (DONE) | `scripts/train_3class.py` — **xlm-roberta-base** → `models/khmer-sentiment-3class/`; neutral oversampled 2.5×, weighted loss, early stop on val macro-F1. **Val: accuracy 0.8503, macro-F1 0.8430** (neg 0.841 / neu 0.815 / pos 0.873); by language: km 0.855, en 0.766, code-switched 0.833 → `reports/phase2_val.json` |
 | Phase 3 — Stacking (DONE, no gain) | `scripts/stack_phase3.py` — 5-fold OOF (xlm-r 3-class, 2 ep/fold) + tykea pseudo-probs + language one-hot → LogisticRegression meta. **Val acc 0.8450 / macro-F1 0.8370 — BELOW the Phase 2 single model (0.8503 / 0.8430)**. tykea features actively hurt (coef analysis + all variants); OOF xlm-r alone 0.8476/0.8413. Conclusion: stacking adds no value here → Phase 4 uses the Phase 2 single model. OOF features cached in `reports/phase3_oof.npz` |
 | Phase 4 — Final test (DONE) | `scripts/evaluate_final.py` — one-shot on `test.csv` (1,878 rows) with `models/khmer-sentiment-3class`: **accuracy 0.8211, macro-F1 0.8156** (neg 0.809 / neu 0.796 / pos 0.842); by language: km 0.8259 acc · en 0.7188 · code-switched 1.0 (n=7) → `reports/phase4_test.json`. vs baseline +0.139 acc, +0.209 macro-F1 |
-| Phase 5 — Integration | *next* — point `config.yaml` at the fine-tuned model, drop neutral-threshold rule, update tests |
+| Phase 5 — Integration (DONE) | `config.yaml` → `local_model_path: models/khmer-sentiment-3class`; `src/predict.py` now runs the 3-class model directly — **EN→KM translation and the 0.60 neutral-threshold rule removed** (model handles Khmer/English/mixed natively); `local_model.py` split into production (`predict`) vs tykea fallback (`predict_fallback`); tests rewritten → **53/53 passed** |
 | Phase 5 — Integration | *next* — point `config.yaml` at new model, drop neutral-threshold rule, update tests |
 
 
@@ -78,10 +78,10 @@ src/common/config.py              paths + params from config.yaml
 src/common/db.py                  psycopg2: connect / register_user / login_user / save_feedback / fetch_feedback
 src/db/schema.sql                 PostgreSQL tables + triggers + functions + views (pgcrypto bcrypt)
 src/models/hf_api.py              HF Inference API → local fallback chain
-src/models/local_model.py         transformers inference (same model id)
-src/models/translate_baseline.py  Google Translate EN→KM (deep-translator fallback)
+src/models/local_model.py         transformers inference — production 3-class (`predict`) + tykea fallback (`predict_fallback`)
+src/models/translate_baseline.py  Google Translate EN→KM (baseline only, no longer in the production path)
 src/models/aspects.py             songhieng multi-label model (lazy-load, Week 5)
-src/predict.py                    detect → translate → classify → 3-class → save
+src/predict.py                    detect → 3-class local model (no translate / no threshold rule)
 scripts/prepare_splits.py         load → clean → dedupe → stratified split → CSV+JSON
 docs/consent.md                   user consent text (Khmer + English)
 tests/                            clean / segment / language / hf_api / predict / splits / anonymize / auth / db
@@ -156,4 +156,4 @@ Key finding: the 0.60-threshold rule cannot detect neutral (F1 0.33) and English
 
 Headline: neutral F1 jumped 0.33 → 0.815 and English acc 0.458 → 0.766, without touching the test set.
 
-**Remaining:** Phase 3 (stacking) → Phase 4 (one-shot test) → Phase 5 (integration).
+**Remaining:** Phase 3 verdict recorded (stacking no-gain) → Phase 4 final test done (acc 0.8211 / macro-F1 0.8156) → Phase 5 integration done (53/53 tests) → **Week 5: aspects** (`src/models/aspects.py`, lazy-load) + deployment.

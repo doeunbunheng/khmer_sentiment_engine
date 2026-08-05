@@ -14,6 +14,8 @@ MODEL = _cfg["model"]
 ASPECT = _cfg["aspect_model"]
 SEED = int(_cfg["project"]["seed"])
 
+MODEL_DIR = PROJECT_ROOT / MODEL["local_model_path"]
+
 LABELED_DIR = PROJECT_ROOT / DATA["labeled_dir"]
 SPLITS_DIR = PROJECT_ROOT / DATA["splits_dir"]
 TRAIN_RATIO = float(DATA["train_ratio"])

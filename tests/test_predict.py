@@ -22,7 +22,7 @@ def _ok(label, score):
 
 
 def test_khmer_positive(monkeypatch):
-    monkeypatch.setattr("src.predict.classify_khmer", lambda t: _ok("Positive", 0.87))
+    monkeypatch.setattr("src.predict.local_predict", lambda t: _ok("positive", 0.87))
     out = predict_sentiment("ផលិតផលល្អណាស់")
     assert out["sentiment"] == "positive"
     assert out["confidence"] == 0.87
@@ -30,63 +30,61 @@ def test_khmer_positive(monkeypatch):
     assert out["translated_text"] is None
 
 
-def test_threshold_boundary_neutral(monkeypatch):
-    monkeypatch.setattr("src.predict.classify_khmer", lambda t: _ok("Positive", 0.59))
-    assert predict_sentiment("ដូចគ្នា")["sentiment"] == "neutral"
+def test_model_neutral_direct(monkeypatch):
+    # neutral now comes from the 3-class model itself, not a threshold rule
+    monkeypatch.setattr("src.predict.local_predict", lambda t: _ok("neutral", 0.72))
+    out = predict_sentiment("ដូចគ្នា")
+    assert out["sentiment"] == "neutral"
+    assert out["confidence"] == 0.72
 
 
-def test_threshold_boundary_positive(monkeypatch):
-    monkeypatch.setattr("src.predict.classify_khmer", lambda t: _ok("Positive", 0.60))
-    assert predict_sentiment("ដូចគ្នា")["sentiment"] == "positive"
+def test_model_low_confidence_keeps_label(monkeypatch):
+    # no threshold: low confidence still returns the model's label
+    monkeypatch.setattr("src.predict.local_predict", lambda t: _ok("positive", 0.41))
+    out = predict_sentiment("ប្រហែលល្អ")
+    assert out["sentiment"] == "positive"
+    assert out["confidence"] == 0.41
 
 
-def test_english_translated_then_classified(monkeypatch):
-    seen = {}
+def test_english_classified_directly(monkeypatch):
+    # the 3-class model handles English natively — no translation
+    calls = {"predict": 0}
 
-    def fake_translate(text):
-        seen["input"] = text
-        return "ផលិតផលល្អ"
+    def fake_predict(text):
+        calls["predict"] += 1
+        assert text == "The product is good"
+        return _ok("positive", 0.8)
 
-    monkeypatch.setattr("src.predict.translate_en_to_km", fake_translate)
-    monkeypatch.setattr("src.predict.classify_khmer", lambda t: _ok("Positive", 0.8))
+    monkeypatch.setattr("src.predict.local_predict", fake_predict)
     out = predict_sentiment("The product is good")
     assert out["language"] == "english"
-    assert seen["input"] == "The product is good"
-    assert out["translated_text"] == "ផលិតផលល្អ"
     assert out["sentiment"] == "positive"
+    assert calls["predict"] == 1
 
 
-def test_mixed_no_translation(monkeypatch):
-    calls = {"translate": 0, "classify": 0}
-
-    def fake_translate(text):
-        calls["translate"] += 1
-        return text
-
-    def fake_classify(text):
-        calls["classify"] += 1
-        return _ok("Negative", 0.9)
-
-    monkeypatch.setattr("src.predict.translate_en_to_km", fake_translate)
-    monkeypatch.setattr("src.predict.classify_khmer", fake_classify)
+def test_mixed_classified_directly(monkeypatch):
+    monkeypatch.setattr("src.predict.local_predict", lambda t: _ok("negative", 0.9))
     out = predict_sentiment("I like it ប៉ុន្តែថ្លៃពេក")
     assert out["language"] == "mixed"
-    assert calls["translate"] == 0
     assert out["sentiment"] == "negative"
 
 
-def test_api_failure_degrades_to_neutral(monkeypatch):
+def test_model_failure_degrades_to_neutral(monkeypatch):
     def boom(text):
         raise RuntimeError("network down")
 
-    monkeypatch.setattr("src.predict.classify_khmer", boom)
+    monkeypatch.setattr("src.predict.local_predict", boom)
     out = predict_sentiment("អត្ថបទណាមួយ")
     assert out["sentiment"] == "neutral"
     assert out["confidence"] == 0.0
+
+
+def test_unknown_label_degrades_to_neutral(monkeypatch):
+    monkeypatch.setattr("src.predict.local_predict", lambda t: _ok("weird", 0.9))
+    assert predict_sentiment("សាកល្បង")["sentiment"] == "neutral"
 
 
 def test_empty_input():
     out = predict_sentiment("")
     assert out["sentiment"] == "neutral"
     assert out["language"] == "unknown"
-
