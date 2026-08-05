@@ -1,0 +1,47 @@
+{
+  "model": "D:\\Update_Project_Internship\\models\\khmer-sentiment-3class",
+  "dataset": "D:\\Update_Project_Internship\\data\\splits\\val.csv",
+  "rows": 1877,
+  "target_accuracy": 0.8,
+  "ece": 0.0829,
+  "overall_accuracy": 0.8503,
+  "bins": [
+    {
+      "bin": "0.5-0.6",
+      "rows": 75,
+      "avg_conf": 0.553,
+      "accuracy": 0.6133,
+      "correct": 46
+    },
+    {
+      "bin": "0.6-0.7",
+      "rows": 71,
+      "avg_conf": 0.6568,
+      "accuracy": 0.4225,
+      "correct": 30
+    },
+    {
+      "bin": "0.7-0.8",
+      "rows": 78,
+      "avg_conf": 0.7536,
+      "accuracy": 0.6282,
+      "correct": 49
+    },
+    {
+      "bin": "0.8-0.9",
+      "rows": 171,
+      "avg_conf": 0.8541,
+      "accuracy": 0.7018,
+      "correct": 120
+    },
+    {
+      "bin": "0.9-1.0",
+      "rows": 1475,
+      "avg_conf": 0.9814,
+      "accuracy": 0.9146,
+      "correct": 1349
+    }
+  ],
+  "min_confidence_for_target_acc": 0.5,
+  "rows_below_target": 7
+}

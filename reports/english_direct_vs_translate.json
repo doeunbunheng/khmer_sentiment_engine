@@ -1,0 +1,30 @@
+{
+  "experiment": "english rows: direct prediction vs EN->KM translation (same 3-class model)",
+  "model": "D:\\Update_Project_Internship\\models\\khmer-sentiment-3class",
+  "dataset": "D:\\Update_Project_Internship\\data\\splits\\test.csv",
+  "rows": 96,
+  "translations": {
+    "ok": 96,
+    "failed_fallback_raw": 0
+  },
+  "results": {
+    "english_direct": {
+      "accuracy": 0.7188,
+      "macro_f1": 0.6594,
+      "total_seconds": 0.141,
+      "ms_per_row": 1.5
+    },
+    "english_translated_to_khmer": {
+      "accuracy": 0.6875,
+      "macro_f1": 0.6359,
+      "translate_seconds": 31.764,
+      "total_seconds": 32.098,
+      "ms_per_row": 334.4
+    }
+  },
+  "label_flips": {
+    "rows_that_changed_label": 13,
+    "pct_changed": 13.5
+  },
+  "conclusion": "direct prediction wins: +accuracy (no translation loss), much faster (227.3x on this run). xlm-roberta handles English natively; translation adds latency and API dependency."
+}

@@ -3,10 +3,16 @@
 Train on data/splits/train.csv (neutral oversampled ~2.5x, class-weighted loss),
 early-stop on val macro-F1, save best checkpoint to models/khmer-sentiment-3class/.
 Test set is NOT touched here.
+
+Usage:
+  .venv\\Scripts\\python scripts\\train_3class.py            # full training
+  .venv\\Scripts\\python scripts\\train_3class.py --smoke    # 200 rows, 1 epoch, temp out dir
 """
 
+import argparse
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -92,11 +98,27 @@ def compute_metrics(eval_pred):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--smoke", action="store_true",
+                    help="quick run: 200 train rows, 1 epoch, save to temp dir (never touches the real model)")
+    args = ap.parse_args()
+
+    smoke = args.smoke
+    out_dir = OUT_DIR
+    epochs = EPOCHS
+    if smoke:
+        out_dir = Path(tempfile.mkdtemp(prefix="smoke_train_"))
+        epochs = 1
+        print("SMOKE MODE: 200 rows, 1 epoch, temp out dir — real model untouched")
+
     train = pd.read_csv(SPLITS_DIR / "train.csv", encoding=ENCODING)
     val = pd.read_csv(SPLITS_DIR / "val.csv", encoding=ENCODING)
 
     train = train[train["label"].isin(LABELS)].copy()
     val = val[val["label"].isin(LABELS)].copy()
+    if smoke:
+        train = train.head(200)
+        val = val.head(200)
     train["label_id"] = train["label"].map(LABEL_TO_ID)
     val["label_id"] = val["label"].map(LABEL_TO_ID)
 
@@ -133,7 +155,7 @@ def main():
         data_seed=SEED,
         per_device_train_batch_size=BATCH_SIZE,
         per_device_eval_batch_size=BATCH_SIZE,
-        num_train_epochs=EPOCHS,
+        num_train_epochs=epochs,
         learning_rate=LR,
         warmup_steps=350,
         weight_decay=0.01,
@@ -162,9 +184,9 @@ def main():
 
     trainer.train()
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    model.save_pretrained(OUT_DIR)
-    tokenizer.save_pretrained(OUT_DIR)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    model.save_pretrained(out_dir)
+    tokenizer.save_pretrained(out_dir)
 
     metrics = trainer.evaluate(eval_dataset=val_ds)
     print("final val metrics:", json.dumps(metrics, indent=2))
@@ -191,7 +213,7 @@ def main():
 
     report = {
         "model": MODEL_NAME,
-        "out_dir": str(OUT_DIR),
+        "out_dir": str(out_dir),
         "train_rows_after_oversample": len(train),
         "val_rows": len(val),
         "epochs": EPOCHS,
@@ -214,11 +236,12 @@ def main():
         "by_language": by_lang,
     }
     REPORTS_DIR.mkdir(exist_ok=True)
-    (REPORTS_DIR / "phase2_val.json").write_text(
+    report_name = "phase2_val.json" if not smoke else "phase2_val_smoke.json"
+    (REPORTS_DIR / report_name).write_text(
         json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
     )
-    print("saved model:", OUT_DIR)
-    print("saved report:", REPORTS_DIR / "phase2_val.json")
+    print("saved model:", out_dir)
+    print("saved report:", REPORTS_DIR / report_name)
 
 
 if __name__ == "__main__":

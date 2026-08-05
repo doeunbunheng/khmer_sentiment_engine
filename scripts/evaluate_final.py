@@ -4,8 +4,13 @@ Model: models/khmer-sentiment-3class (xlm-roberta-base fine-tuned, Phase 2).
 Raw text in (no translation — the 3-class model handles Khmer/English/mixed natively).
 Outputs: accuracy, macro-F1, per-class table, confusion matrix, per-language
 breakdown -> reports/phase4_test.json. This is the FINAL published number.
+
+Usage:
+  .venv\\Scripts\\python scripts\\evaluate_final.py
+  .venv\\Scripts\\python scripts\\evaluate_final.py --max-rows 200   # smoke
 """
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -46,9 +51,17 @@ class TextDataset(Dataset):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--max-rows", type=int, default=None,
+                    help="cap rows (smoke test)")
+    ap.add_argument("--report-name", default="phase4_test.json")
+    args = ap.parse_args()
+
     print("loading test split...")
     df = pd.read_csv(SPLITS_DIR / "test.csv", encoding=ENCODING)
     df = df[df["label"].isin(LABELS)].copy()
+    if args.max_rows:
+        df = df.head(args.max_rows)
     texts = df["text"].astype(str).tolist()
     y_true = df["label"].map({lab: i for i, lab in enumerate(LABELS)}).tolist()
 
@@ -112,7 +125,7 @@ def main():
     }
 
     REPORTS_DIR.mkdir(exist_ok=True)
-    (REPORTS_DIR / "phase4_test.json").write_text(
+    (REPORTS_DIR / args.report_name).write_text(
         json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
@@ -128,7 +141,7 @@ def main():
     print("\nby language:")
     for lang, d in by_lang.items():
         print(f"  {lang:>12}: rows={d['rows']:>4}  acc={d['accuracy']:.4f}  macro_f1={d['macro_f1']:.4f}")
-    print(f"\nsaved: {REPORTS_DIR / 'phase4_test.json'}")
+    print(f"\nsaved: {REPORTS_DIR / args.report_name}")
 
 
 if __name__ == "__main__":

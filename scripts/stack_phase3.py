@@ -147,6 +147,21 @@ def predict_probs(tokenizer, model, texts, batch_size=64):
     return np.vstack(probs)
 
 
+def tykea_to_3probs(label, score):
+    """Map a tykea 2-class (label, score) pair to a 3-dim pseudo-probability
+    [pos, neu, neg] that sums to 1 — smooth version of the
+    score < 0.60 -> neutral rule (neutral mass grows as confidence falls)."""
+    lab = str(label).lower().strip()
+    sc = float(score)
+    if lab.startswith("pos"):
+        pos, neg = sc, 1.0 - sc
+    else:
+        neg, pos = sc, 1.0 - sc
+    neu = 1.0 - max(pos, neg)
+    total = pos + neg + neu
+    return [pos / total, neu / total, neg / total]
+
+
 def tykea_pseudo_probs(texts, batch_size=64):
     tokenizer, model, labels = _load()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -166,12 +181,7 @@ def tykea_pseudo_probs(texts, batch_size=64):
             for j in range(len(batch)):
                 lab = labels[int(logits[j].argmax())]
                 sc = float(probs[j].max())
-                if lab.lower().startswith("pos"):
-                    pos, neg = sc, 1.0 - sc
-                else:
-                    neg, pos = sc, 1.0 - sc
-                neu = 1.0 - max(pos, neg)
-                out.append([pos, neu, neg])
+                out.append(tykea_to_3probs(lab, sc))
     return np.array(out, dtype=np.float32)
 
 
