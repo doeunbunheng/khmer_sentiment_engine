@@ -1,0 +1,39 @@
+project:
+  name: khmer-sentiment-engine
+  seed: 42
+
+data:
+  labeled_dir: data/labeled
+  splits_dir: data/splits
+  train_ratio: 0.8
+  val_ratio: 0.1
+  test_ratio: 0.1
+  encoding: utf-8
+
+preprocessing:
+  remove_urls: true
+  remove_emails: true
+  remove_mentions: true
+  remove_hashtags: true
+  collapse_whitespace: true
+  unicode_normalize: NFC
+
+model:
+  hf_model: tykea/khmer-text-sentiment-analysis-roberta
+  api_host: https://api-inference.huggingface.co
+  neutral_threshold: 0.60
+  max_retries: 2
+  timeout_seconds: 30
+  use_local_fallback: true
+  local_max_length: 512
+
+aspect_model:
+  hf_model: songhieng/khmer-xlmr-base-sentimental-multi-label
+  labels: [Anger, Anticipation, Disgust, Fear, Joy, Optimism, Sadness, Surprise]
+
+db:
+  host: localhost
+  port: 5432
+  name: khmer_sentiment
+  user: postgres
+  password: postgres

@@ -1,0 +1,15 @@
+pandas==3.0.5
+khmer-nltk==1.6
+scikit-learn==1.9.0
+psycopg2-binary==2.9.12
+python-dotenv==1.2.2
+PyYAML==6.0.3
+pytest==9.1.1
+requests==2.34.2
+deep-translator==1.11.4
+torch==2.13.0
+transformers==5.14.1
+safetensors
+accelerate>=1.1.0
+datasets
+evaluate

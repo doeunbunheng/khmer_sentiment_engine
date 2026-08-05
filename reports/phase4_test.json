@@ -1,0 +1,74 @@
+{
+  "model": "D:\\Update_Project_Internship\\models\\khmer-sentiment-3class",
+  "dataset": "D:\\Update_Project_Internship\\data\\splits\\test.csv",
+  "rows": 1878,
+  "seed": 42,
+  "accuracy": 0.8211,
+  "macro_f1": 0.8156,
+  "per_class": {
+    "negative": {
+      "precision": 0.8011,
+      "recall": 0.8178,
+      "f1": 0.8094,
+      "support": 719
+    },
+    "neutral": {
+      "precision": 0.7465,
+      "recall": 0.8521,
+      "f1": 0.7958,
+      "support": 311
+    },
+    "positive": {
+      "precision": 0.8733,
+      "recall": 0.8125,
+      "f1": 0.8418,
+      "support": 848
+    }
+  },
+  "confusion_matrix": {
+    "rows": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "cols": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "values": [
+      [
+        588,
+        54,
+        77
+      ],
+      [
+        23,
+        265,
+        23
+      ],
+      [
+        123,
+        36,
+        689
+      ]
+    ]
+  },
+  "by_language": {
+    "code-switched": {
+      "rows": 7,
+      "accuracy": 1.0,
+      "macro_f1": 1.0
+    },
+    "en": {
+      "rows": 96,
+      "accuracy": 0.7188,
+      "macro_f1": 0.6594
+    },
+    "km": {
+      "rows": 1775,
+      "accuracy": 0.8259,
+      "macro_f1": 0.8219
+    }
+  }
+}

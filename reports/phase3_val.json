@@ -1,0 +1,92 @@
+{
+  "model": "stacking: xlm-roberta 3class OOF + tykea 2class pseudo-probs -> LogisticRegression",
+  "folds": 5,
+  "fold_epochs": 2,
+  "train_rows": 15016,
+  "val_rows": 1877,
+  "feature_names": [
+    "xlm_pos",
+    "xlm_neu",
+    "xlm_neg",
+    "tykea_pos",
+    "tykea_neu",
+    "tykea_neg",
+    "khmer",
+    "english",
+    "mixed",
+    "unknown"
+  ],
+  "meta_learner": "LogisticRegression(C=1.0, class_weight=balanced)",
+  "val": {
+    "eval_accuracy": 0.845,
+    "eval_macro_f1": 0.837,
+    "train_accuracy": 0.842
+  },
+  "per_class": {
+    "negative": {
+      "precision": 0.8161,
+      "recall": 0.8593,
+      "f1": 0.8372,
+      "support": 718
+    },
+    "neutral": {
+      "precision": 0.7585,
+      "recall": 0.8585,
+      "f1": 0.8054,
+      "support": 311
+    },
+    "positive": {
+      "precision": 0.9129,
+      "recall": 0.8278,
+      "f1": 0.8683,
+      "support": 848
+    }
+  },
+  "confusion_matrix": {
+    "rows": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "cols": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "values": [
+      [
+        617,
+        47,
+        54
+      ],
+      [
+        31,
+        267,
+        13
+      ],
+      [
+        108,
+        38,
+        702
+      ]
+    ]
+  },
+  "by_language": {
+    "code-switched": {
+      "rows": 6,
+      "accuracy": 0.6667,
+      "macro_f1": 0.2963
+    },
+    "en": {
+      "rows": 94,
+      "accuracy": 0.7447,
+      "macro_f1": 0.6468
+    },
+    "km": {
+      "rows": 1777,
+      "accuracy": 0.8509,
+      "macro_f1": 0.8455
+    }
+  },
+  "elapsed_minutes": 51.6
+}

@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+.venv-backup/
+venv/
+.env
+.pytest_cache/
+data/raw/
+data/labeled/*.csv
+data/splits/*.csv
+results/
+models_saved/
+models/
+reports/trainer_out/
+*.ipynb_checkpoints/
+.db

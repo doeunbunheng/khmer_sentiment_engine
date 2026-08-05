@@ -1,0 +1,77 @@
+{
+  "dataset": "D:\\Update_Project_Internship\\data\\splits\\test.csv",
+  "rows": 1878,
+  "pipeline": "tykea local 2-class + threshold 0.60 (production fallback path)",
+  "translation": "enabled (best-effort)",
+  "translated_rows": 96,
+  "translate_failures": 0,
+  "accuracy": 0.6821,
+  "macro_f1": 0.6071,
+  "weighted_f1": 0.6778,
+  "per_class": {
+    "negative": {
+      "precision": 0.6742,
+      "recall": 0.7886,
+      "f1": 0.7269,
+      "support": 719
+    },
+    "neutral": {
+      "precision": 0.3612,
+      "recall": 0.3055,
+      "f1": 0.331,
+      "support": 311
+    },
+    "positive": {
+      "precision": 0.7997,
+      "recall": 0.73,
+      "f1": 0.7633,
+      "support": 848
+    }
+  },
+  "confusion_matrix": {
+    "rows": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "cols": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "values": [
+      [
+        567,
+        94,
+        58
+      ],
+      [
+        119,
+        95,
+        97
+      ],
+      [
+        155,
+        74,
+        619
+      ]
+    ]
+  },
+  "by_language": {
+    "english": {
+      "rows": 96,
+      "accuracy": 0.4583,
+      "macro_f1": 0.4616
+    },
+    "khmer": {
+      "rows": 1775,
+      "accuracy": 0.6935,
+      "macro_f1": 0.6144
+    },
+    "mixed": {
+      "rows": 7,
+      "accuracy": 0.8571,
+      "macro_f1": 0.3333
+    }
+  }
+}

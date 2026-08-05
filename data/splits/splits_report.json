@@ -1,0 +1,32 @@
+{
+  "source_files": [
+    "D:\\Update_Project_Internship\\data\\labeled\\external_processed.csv"
+  ],
+  "total_after_clean": 18771,
+  "splits": {
+    "train": {
+      "rows": 15016,
+      "labels": {
+        "positive": 6781,
+        "negative": 5746,
+        "neutral": 2489
+      }
+    },
+    "val": {
+      "rows": 1877,
+      "labels": {
+        "positive": 848,
+        "negative": 718,
+        "neutral": 311
+      }
+    },
+    "test": {
+      "rows": 1878,
+      "labels": {
+        "positive": 848,
+        "negative": 719,
+        "neutral": 311
+      }
+    }
+  }
+}

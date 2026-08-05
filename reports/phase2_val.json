@@ -1,0 +1,85 @@
+{
+  "model": "xlm-roberta-base",
+  "out_dir": "D:\\Update_Project_Internship\\models\\khmer-sentiment-3class",
+  "train_rows_after_oversample": 18749,
+  "val_rows": 1877,
+  "epochs": 3,
+  "max_length": 256,
+  "batch_size": 16,
+  "lr": 2e-05,
+  "val": {
+    "eval_accuracy": 0.8503,
+    "eval_macro_f1": 0.843,
+    "eval_loss": 0.4749,
+    "eval_runtime": 4.1739,
+    "eval_samples_per_second": 449.694,
+    "eval_steps_per_second": 28.271,
+    "epoch": 3.0
+  },
+  "per_class": {
+    "negative": {
+      "precision": 0.8342,
+      "recall": 0.8482,
+      "f1": 0.8412,
+      "support": 718
+    },
+    "neutral": {
+      "precision": 0.7555,
+      "recall": 0.8842,
+      "f1": 0.8148,
+      "support": 311
+    },
+    "positive": {
+      "precision": 0.9093,
+      "recall": 0.8396,
+      "f1": 0.8731,
+      "support": 848
+    }
+  },
+  "confusion_matrix": {
+    "rows": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "cols": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "values": [
+      [
+        609,
+        53,
+        56
+      ],
+      [
+        21,
+        275,
+        15
+      ],
+      [
+        100,
+        36,
+        712
+      ]
+    ]
+  },
+  "by_language": {
+    "code-switched": {
+      "rows": 6,
+      "accuracy": 0.8333,
+      "macro_f1": 0.7778
+    },
+    "en": {
+      "rows": 94,
+      "accuracy": 0.766,
+      "macro_f1": 0.6977
+    },
+    "km": {
+      "rows": 1777,
+      "accuracy": 0.8548,
+      "macro_f1": 0.8493
+    }
+  }
+}
