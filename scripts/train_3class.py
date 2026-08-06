@@ -101,10 +101,18 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--smoke", action="store_true",
                     help="quick run: 200 train rows, 1 epoch, save to temp dir (never touches the real model)")
+    ap.add_argument("--extra-train", type=Path, default=None,
+                    help="extra training CSV (columns text,label) to mix in — e.g. kh-polarity train_mix")
+    ap.add_argument("--extra-val", type=Path, default=None,
+                    help="extra validation CSV (columns text,label) to mix in")
+    ap.add_argument("--out-dir", type=Path, default=None,
+                    help="output model dir (default: models/khmer-sentiment-3class)")
+    ap.add_argument("--report-name", default=None,
+                    help="report file name (default: phase2_val.json / phase2_val_smoke.json)")
     args = ap.parse_args()
 
     smoke = args.smoke
-    out_dir = OUT_DIR
+    out_dir = args.out_dir or OUT_DIR
     epochs = EPOCHS
     if smoke:
         out_dir = Path(tempfile.mkdtemp(prefix="smoke_train_"))
@@ -113,6 +121,16 @@ def main():
 
     train = pd.read_csv(SPLITS_DIR / "train.csv", encoding=ENCODING)
     val = pd.read_csv(SPLITS_DIR / "val.csv", encoding=ENCODING)
+    if args.extra_train:
+        extra_train = pd.read_csv(args.extra_train, encoding=ENCODING)
+        train = pd.concat([train, extra_train[["text", "label"]]], ignore_index=True)
+        print(f"mixed train: +{len(extra_train)} rows from {args.extra_train.name} "
+              f"(total {len(train)})")
+    if args.extra_val:
+        extra_val = pd.read_csv(args.extra_val, encoding=ENCODING)
+        val = pd.concat([val, extra_val[["text", "label"]]], ignore_index=True)
+        print(f"mixed val: +{len(extra_val)} rows from {args.extra_val.name} "
+              f"(total {len(val)})")
 
     train = train[train["label"].isin(LABELS)].copy()
     val = val[val["label"].isin(LABELS)].copy()
@@ -236,7 +254,7 @@ def main():
         "by_language": by_lang,
     }
     REPORTS_DIR.mkdir(exist_ok=True)
-    report_name = "phase2_val.json" if not smoke else "phase2_val_smoke.json"
+    report_name = args.report_name or ("phase2_val.json" if not smoke else "phase2_val_smoke.json")
     (REPORTS_DIR / report_name).write_text(
         json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
     )

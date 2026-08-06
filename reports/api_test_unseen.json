@@ -1,0 +1,70 @@
+{
+  "endpoint": "http://127.0.0.1:8000/predict",
+  "model": "khmer-sentiment-3class-v2 (served by API)",
+  "dataset": "data/external_splits/test_ext.csv (held-out, never trained on)",
+  "rows": 989,
+  "errors": 869,
+  "accuracy": 0.6168,
+  "macro_f1": 0.3904,
+  "per_class": {
+    "negative": {
+      "precision": 0.8125,
+      "recall": 0.081,
+      "f1": 0.1473,
+      "support": 321
+    },
+    "neutral": {
+      "precision": 0.7895,
+      "recall": 0.1648,
+      "f1": 0.2727,
+      "support": 91
+    },
+    "positive": {
+      "precision": 0.6066,
+      "recall": 0.9861,
+      "f1": 0.7512,
+      "support": 577
+    }
+  },
+  "confusion_matrix": {
+    "rows": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "cols": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "values": [
+      [
+        26,
+        1,
+        294
+      ],
+      [
+        1,
+        15,
+        75
+      ],
+      [
+        5,
+        3,
+        569
+      ]
+    ]
+  },
+  "by_language": {
+    "khmer": {
+      "rows": 869,
+      "accuracy": 0.6122,
+      "macro_f1": 0.3857
+    },
+    "mixed": {
+      "rows": 120,
+      "accuracy": 0.65,
+      "macro_f1": 0.3809
+    }
+  }
+}

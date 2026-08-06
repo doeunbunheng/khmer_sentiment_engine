@@ -30,6 +30,45 @@ def test_khmer_positive(monkeypatch):
     assert out["translated_text"] is None
 
 
+def test_uncertain_flag_high_confidence(monkeypatch):
+    monkeypatch.setattr("src.predict.local_predict", lambda t: _ok("positive", 0.97))
+    out = predict_sentiment("ផលិតផលល្អណាស់")
+    assert out["confidence"] == 0.97
+    assert out["uncertain"] is False
+
+
+def test_uncertain_flag_low_confidence(monkeypatch):
+    monkeypatch.setattr("src.predict.local_predict", lambda t: _ok("positive", 0.55))
+    out = predict_sentiment("ប្រហែលល្អ")
+    assert out["confidence"] == 0.55
+    assert out["uncertain"] is True
+
+
+def test_uncertain_flag_boundary(monkeypatch):
+    from src.common.config import UNCERTAINTY_THRESHOLD
+
+    monkeypatch.setattr(
+        "src.predict.local_predict", lambda t: _ok("positive", UNCERTAINTY_THRESHOLD)
+    )
+    out = predict_sentiment("ដូចគ្នា")
+    assert out["uncertain"] is False
+
+
+def test_uncertain_flag_failure_path(monkeypatch):
+    monkeypatch.setattr(
+        "src.predict.local_predict",
+        lambda t: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
+    out = predict_sentiment("អ្វីមួយ")
+    assert out["confidence"] == 0.0
+    assert out["uncertain"] is True
+
+
+def test_uncertain_flag_empty_text():
+    out = predict_sentiment("   ")
+    assert out["uncertain"] is True
+
+
 def test_model_neutral_direct(monkeypatch):
     # neutral now comes from the 3-class model itself, not a threshold rule
     monkeypatch.setattr("src.predict.local_predict", lambda t: _ok("neutral", 0.72))

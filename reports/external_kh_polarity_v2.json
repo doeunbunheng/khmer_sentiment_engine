@@ -1,0 +1,68 @@
+{
+  "model": "models\\khmer-sentiment-3class-v2",
+  "dataset": "kh-polarity ver1.0 (ye-kyaw-thu), unseen â€” zero overlap with train/val/test",
+  "rows": 9882,
+  "accuracy": 0.9171,
+  "macro_f1": 0.8982,
+  "per_class": {
+    "negative": {
+      "precision": 0.903,
+      "recall": 0.907,
+      "f1": 0.905,
+      "support": 3203
+    },
+    "neutral": {
+      "precision": 0.8256,
+      "recall": 0.8877,
+      "f1": 0.8555,
+      "support": 917
+    },
+    "positive": {
+      "precision": 0.941,
+      "recall": 0.9275,
+      "f1": 0.9342,
+      "support": 5762
+    }
+  },
+  "confusion_matrix": {
+    "rows": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "cols": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "values": [
+      [
+        2905,
+        38,
+        260
+      ],
+      [
+        28,
+        814,
+        75
+      ],
+      [
+        284,
+        134,
+        5344
+      ]
+    ]
+  },
+  "by_language": {
+    "khmer": {
+      "rows": 8697,
+      "accuracy": 0.9154,
+      "macro_f1": 0.8965
+    },
+    "mixed": {
+      "rows": 1185,
+      "accuracy": 0.93,
+      "macro_f1": 0.9099
+    }
+  }
+}

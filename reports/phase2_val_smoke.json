@@ -1,0 +1,80 @@
+{
+  "model": "xlm-roberta-base",
+  "out_dir": "C:\\Users\\Bunheng\\AppData\\Local\\Temp\\smoke_train_k6e0u_ju",
+  "train_rows_after_oversample": 254,
+  "val_rows": 200,
+  "epochs": 3,
+  "max_length": 256,
+  "batch_size": 16,
+  "lr": 2e-05,
+  "val": {
+    "eval_accuracy": 0.405,
+    "eval_macro_f1": 0.1922,
+    "eval_loss": 1.1263,
+    "eval_runtime": 0.4229,
+    "eval_samples_per_second": 472.938,
+    "eval_steps_per_second": 30.741,
+    "epoch": 1.0
+  },
+  "per_class": {
+    "negative": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 78
+    },
+    "neutral": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 41
+    },
+    "positive": {
+      "precision": 0.405,
+      "recall": 1.0,
+      "f1": 0.5765,
+      "support": 81
+    }
+  },
+  "confusion_matrix": {
+    "rows": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "cols": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "values": [
+      [
+        0,
+        0,
+        78
+      ],
+      [
+        0,
+        0,
+        41
+      ],
+      [
+        0,
+        0,
+        81
+      ]
+    ]
+  },
+  "by_language": {
+    "en": {
+      "rows": 5,
+      "accuracy": 0.0,
+      "macro_f1": 0.0
+    },
+    "km": {
+      "rows": 195,
+      "accuracy": 0.4154,
+      "macro_f1": 0.1957
+    }
+  }
+}

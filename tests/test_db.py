@@ -76,3 +76,25 @@ def test_consent_false_raises(user_id):
             confidence=0.7,
             consent=False,
         )
+
+
+def test_saved_row_roundtrips_aspects_json(user_id):
+    aspects = {
+        "business_aspects": {
+            "Price": {"hit": True, "keywords": ["price"]},
+            "Service": {"hit": False, "keywords": []},
+        },
+        "emotions": {"scores": {"Joy": 0.8, "Anger": 0.1}, "active": ["Joy"]},
+    }
+    fid = db.save_feedback(
+        user_id=user_id,
+        text_orig="price is great",
+        lang_detect="english",
+        sentiment="positive",
+        confidence=0.9,
+        aspects=aspects,
+        consent=True,
+    )
+    rows = db.fetch_feedback(user_id=user_id, limit=500)
+    row = next(r for r in rows if r[0] == fid)
+    assert row[9] == aspects

@@ -5,6 +5,7 @@ __pycache__/
 venv/
 .env
 .pytest_cache/
+logs/
 data/raw/
 data/labeled/*.csv
 data/splits/*.csv

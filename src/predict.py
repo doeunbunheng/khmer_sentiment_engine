@@ -1,11 +1,19 @@
 """Pipeline: language detect → 3-class local sentiment → 3-class label.
 
-Production path uses the fine-tuned `models/khmer-sentiment-3class` model
+Production path uses the fine-tuned `models/khmer-sentiment-3class-v2` model
 (xlm-roberta) which handles Khmer / English / code-switched natively —
 no EN→KM translation and no neutral-threshold rule needed.
+
+OOD guard: every prediction carries an `uncertain` flag — `True` when the
+model confidence is below `model.uncertainty_threshold` (config.yaml, default
+0.90, based on calibration: rows ≥ 0.90 are well calibrated, rows below are
+unreliable) or when the text is empty. The UI should treat `uncertain` as
+"ask the user / show a neutral state" instead of presenting a guess.
 """
 
+from src.common.config import UNCERTAINTY_THRESHOLD
 from src.models.local_model import predict as local_predict
+from src.models.aspects import predict as predict_aspects
 from src.preprocessing.language_detect import detect_language
 from src.common import db as common_db
 
@@ -19,7 +27,9 @@ def predict_sentiment(text):
             "language": "unknown",
             "sentiment": "neutral",
             "confidence": 0.0,
+            "uncertain": True,
             "translated_text": None,
+            "aspects": {"business_aspects": {}, "emotions": {"scores": {}, "active": []}},
         }
     lang = detect_language(text)
     try:
@@ -28,12 +38,18 @@ def predict_sentiment(text):
         label, score = "neutral", 0.0
     if label not in LABELS:
         label = "neutral"
+    try:
+        aspects = predict_aspects(text)
+    except Exception:
+        aspects = {"business_aspects": {}, "emotions": {"scores": {}, "active": []}}
     return {
         "text": text,
         "language": lang,
         "sentiment": label,
         "confidence": score,
+        "uncertain": score < UNCERTAINTY_THRESHOLD,
         "translated_text": None,
+        "aspects": aspects,
     }
 
 

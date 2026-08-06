@@ -1,0 +1,90 @@
+{
+  "model": "D:\\Update_Project_Internship\\models\\khmer-sentiment-3class",
+  "dataset": "kh-polarity ver1.0 (ye-kyaw-thu), unseen — zero overlap with train/val/test",
+  "rows": 9882,
+  "accuracy": 0.4165,
+  "macro_f1": 0.4216,
+  "per_class": {
+    "negative": {
+      "precision": 0.7125,
+      "recall": 0.4433,
+      "f1": 0.5466,
+      "support": 3203
+    },
+    "neutral": {
+      "precision": 0.1366,
+      "recall": 0.8517,
+      "f1": 0.2355,
+      "support": 917
+    },
+    "positive": {
+      "precision": 0.8817,
+      "recall": 0.3323,
+      "f1": 0.4827,
+      "support": 5762
+    }
+  },
+  "confusion_matrix": {
+    "rows": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "cols": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "values": [
+      [
+        1420,
+        1594,
+        189
+      ],
+      [
+        68,
+        781,
+        68
+      ],
+      [
+        505,
+        3342,
+        1915
+      ]
+    ]
+  },
+  "by_language": {
+    "khmer": {
+      "rows": 8697,
+      "accuracy": 0.4369,
+      "macro_f1": 0.4373
+    },
+    "mixed": {
+      "rows": 1185,
+      "accuracy": 0.2667,
+      "macro_f1": 0.261
+    }
+  },
+  "business_aspects": {
+    "Authenticity": {
+      "rows_hit": 2052,
+      "pct": 20.77
+    },
+    "Delivery": {
+      "rows_hit": 537,
+      "pct": 5.43
+    },
+    "Price": {
+      "rows_hit": 697,
+      "pct": 7.05
+    },
+    "Product Quality": {
+      "rows_hit": 246,
+      "pct": 2.49
+    },
+    "Service": {
+      "rows_hit": 431,
+      "pct": 4.36
+    }
+  }
+}

@@ -14,7 +14,10 @@ MODEL = _cfg["model"]
 ASPECT = _cfg["aspect_model"]
 SEED = int(_cfg["project"]["seed"])
 
+UNCERTAINTY_THRESHOLD = float(MODEL.get("uncertainty_threshold", 0.90))
+
 MODEL_DIR = PROJECT_ROOT / MODEL["local_model_path"]
+ASPECT_MODEL_DIR = PROJECT_ROOT / ASPECT["local_path"]
 
 LABELED_DIR = PROJECT_ROOT / DATA["labeled_dir"]
 SPLITS_DIR = PROJECT_ROOT / DATA["splits_dir"]

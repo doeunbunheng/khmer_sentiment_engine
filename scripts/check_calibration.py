@@ -27,9 +27,8 @@ from sklearn.metrics import accuracy_score
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from src.common.config import SPLITS_DIR, ENCODING
+from src.common.config import SPLITS_DIR, ENCODING, MODEL_DIR
 
-MODEL_DIR = PROJECT_ROOT / "models" / "khmer-sentiment-3class"
 REPORTS_DIR = PROJECT_ROOT / "reports"
 MAX_LEN = 256
 BATCH_SIZE = 64
@@ -51,10 +50,14 @@ class TextDataset(Dataset):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--split-path", default=str(SPLITS_DIR / "val.csv"))
+    ap.add_argument("--model-dir", default=str(MODEL_DIR),
+                    help="model dir (default: config.yaml local_model_path, i.e. v2)")
     ap.add_argument("--target-acc", type=float, default=0.80)
     ap.add_argument("--max-rows", type=int, default=None)
+    ap.add_argument("--report-name", default="calibration.json")
     args = ap.parse_args()
 
+    model_dir = Path(args.model_dir)
     df = pd.read_csv(args.split_path, encoding=ENCODING)
     df = df[df["label"].isin(LABELS)].copy()
     if args.max_rows:
@@ -62,8 +65,8 @@ def main():
     texts = df["text"].astype(str).tolist()
     y_true = df["label"].map(LABEL_TO_ID).tolist()
 
-    tokenizer = AutoTokenizer.from_pretrained(str(MODEL_DIR))
-    model = AutoModelForSequenceClassification.from_pretrained(str(MODEL_DIR))
+    tokenizer = AutoTokenizer.from_pretrained(str(model_dir))
+    model = AutoModelForSequenceClassification.from_pretrained(str(model_dir))
     model.eval()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
@@ -109,7 +112,7 @@ def main():
                 break
 
     report = {
-        "model": str(MODEL_DIR),
+        "model": str(model_dir),
         "dataset": str(Path(args.split_path)),
         "rows": len(df),
         "target_accuracy": args.target_acc,
@@ -121,7 +124,7 @@ def main():
     }
 
     REPORTS_DIR.mkdir(exist_ok=True)
-    (REPORTS_DIR / "calibration.json").write_text(
+    (REPORTS_DIR / args.report_name).write_text(
         json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
@@ -140,7 +143,7 @@ def main():
               f"{report['rows_below_target']} ({report['rows_below_target']/len(df)*100:.1f}%)")
     else:
         print(f"\nno confidence threshold reaches accuracy {args.target_acc}")
-    print(f"\nsaved: {REPORTS_DIR / 'calibration.json'}")
+    print(f"\nsaved: {REPORTS_DIR / args.report_name}")
 
 
 if __name__ == "__main__":

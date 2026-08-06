@@ -267,7 +267,7 @@ GRANT SELECT ON v_feedback_report TO role_user;
 -- STEP 7: SAMPLE DATA (optional test)
 -- ============================================================
 
-SELECT register_user('demo_admin', 'BV132336', 'Admin', 'Admin Demo', 'admin@demo.kh', '010-000-000');
-SELECT register_user('demo_user',  'Secret123!', 'User',  'User Demo',  'user@demo.kh',  '012-000-000');
+SELECT register_user('demo_admin', '132336BV132336', 'Admin', 'Admin Demo', 'admin@demo.kh', '010-000-000');
+SELECT register_user('demo_user',  'user@132123', 'User',  'User Demo',  'user@demo.kh',  '012-000-000');
 
 COMMIT;

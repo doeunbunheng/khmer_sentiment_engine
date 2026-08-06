@@ -3,18 +3,42 @@ services:
     image: postgres:16-alpine
     container_name: khmer_sentiment_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: khmer_sentiment
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-khmer_sentiment}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./src/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d khmer_sentiment"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-khmer_sentiment}"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build: .
+    container_name: khmer_sentiment_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-khmer_sentiment}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      API_SECRET: ${API_SECRET:?API_SECRET must be set in .env}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+      API_TOKEN_TTL: ${API_TOKEN_TTL:-86400}
+      API_LOGIN_LIMIT: ${API_LOGIN_LIMIT:-5/minute}
+      API_PREDICT_LIMIT: ${API_PREDICT_LIMIT:-120/minute}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+    restart: unless-stopped
 
 volumes:
   pgdata:

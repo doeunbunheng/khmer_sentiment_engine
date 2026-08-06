@@ -20,9 +20,10 @@ preprocessing:
 
 model:
   hf_model: tykea/khmer-text-sentiment-analysis-roberta
-  local_model_path: models/khmer-sentiment-3class
+  local_model_path: models/khmer-sentiment-3class-v2
   api_host: https://api-inference.huggingface.co
   neutral_threshold: 0.60
+  uncertainty_threshold: 0.90
   max_retries: 2
   timeout_seconds: 30
   use_local_fallback: true
@@ -30,6 +31,8 @@ model:
 
 aspect_model:
   hf_model: songhieng/khmer-xlmr-base-sentimental-multi-label
+  local_path: models/khmer-aspects-multilabel
+  emotion_threshold: 0.5
   labels: [Anger, Anticipation, Disgust, Fear, Joy, Optimism, Sadness, Surprise]
 
 db:

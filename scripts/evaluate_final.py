@@ -55,7 +55,11 @@ def main():
     ap.add_argument("--max-rows", type=int, default=None,
                     help="cap rows (smoke test)")
     ap.add_argument("--report-name", default="phase4_test.json")
+    ap.add_argument("--model-dir", type=Path, default=None,
+                    help="model directory (default: models/khmer-sentiment-3class)")
     args = ap.parse_args()
+
+    model_dir = args.model_dir or MODEL_DIR
 
     print("loading test split...")
     df = pd.read_csv(SPLITS_DIR / "test.csv", encoding=ENCODING)
@@ -65,9 +69,9 @@ def main():
     texts = df["text"].astype(str).tolist()
     y_true = df["label"].map({lab: i for i, lab in enumerate(LABELS)}).tolist()
 
-    print(f"loading model from {MODEL_DIR} ...")
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_DIR)
+    print(f"loading model from {model_dir} ...")
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    model = AutoModelForSequenceClassification.from_pretrained(model_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     model.eval()
@@ -103,7 +107,7 @@ def main():
         }
 
     report = {
-        "model": str(MODEL_DIR),
+        "model": str(model_dir),
         "dataset": str(SPLITS_DIR / "test.csv"),
         "rows": len(df),
         "seed": SEED,
