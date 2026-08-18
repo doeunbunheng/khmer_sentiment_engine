@@ -16,3 +16,4 @@ evaluate
 fastapi==0.141.1
 uvicorn==0.52.1
 slowapi==0.1.10
+streamlit==1.61.1

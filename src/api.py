@@ -86,6 +86,42 @@ class LoginResponse(BaseModel):
     expires_in_seconds: int
 
 
+class RegisterRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=64)
+    password: str = Field(..., min_length=6, max_length=128)
+    full_name: Optional[str] = Field(default=None, max_length=128)
+    email: Optional[str] = Field(default=None, max_length=128)
+    phone: Optional[str] = Field(default=None, max_length=32)
+
+
+class RegisterResponse(BaseModel):
+    user_id: int
+    role: str
+    message: str
+
+
+@app.post("/auth/register", response_model=RegisterResponse, status_code=201)
+@limiter.limit(LOGIN_LIMIT)
+def register(request: Request, body: RegisterRequest):
+    try:
+        user_id = common_db.register_user(
+            username=body.username,
+            password=body.password,
+            role="User",  # self-registration can never mint an Admin
+            full_name=body.full_name,
+            email=body.email,
+            phone=body.phone,
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=409,
+            detail="username, email, or phone already registered",
+        )
+    if user_id is None:
+        raise HTTPException(status_code=409, detail="registration failed")
+    return RegisterResponse(user_id=user_id, role="User", message="registered")
+
+
 @app.post("/auth/login", response_model=LoginResponse)
 @limiter.limit(LOGIN_LIMIT)
 def login(request: Request, body: LoginRequest):

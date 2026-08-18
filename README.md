@@ -3,12 +3,12 @@
 3-class sentiment (Positive / Negative / Neutral) + aspect analysis for
 Khmer, English, and code-switched consumer comments.
 
-**Status: Week 5 complete** — 3-class sentiment + business aspects + 8-emotion
-analysis, **v2 (mixed-domain) model in production**: in-domain test
-0.8333 / 0.8291, unseen kh-polarity held-out 0.8241 / 0.7543. **Local API
-deployment done** (`src/api.py` + FastAPI, unseen 989 rows through the API:
-**0.8241 — exact parity with offline**). Calibration checked (ECE 0.083),
-**105/105 tests pass**.
+**Status: Week 6 complete** — Streamlit dashboard (`app/`) on top of the
+hardened API: login/register, live prediction with the **uncertain** OOD state,
+a **Test data** page (paste text / upload CSV / built-in 989-row benchmark run
+through the live API), an **Ask the AI agent** chat that explains each result
+(offline explainer + optional LLM key), Admin feedback view, and a new
+`POST /auth/register` endpoint. 178/178 tests pass.
 
 ---
 
@@ -195,6 +195,32 @@ Reading the numbers:
 4. **English is the weak spot** (test 0.719) — only 96 rows; more EN data would help
 
 Sources: `reports/phase2_val.json`, `reports/phase4_test.json`, `reports/phase3_oof.npz`
+
+---
+
+## Week 6 — Streamlit dashboard + AI agent (done)
+
+`app/` — a full UI on top of the hardened API, run with:
+
+```bash
+.venv\Scripts\streamlit run app\dashboard.py        # http://localhost:8501
+```
+
+| Page | What it does |
+|---|---|
+| Log in / Create account | New `POST /auth/register` endpoint (self-registration can never mint an Admin); tokens stored per session |
+| Analyze a comment | Type/example Khmer/English/mixed text → sentiment badge + confidence, **amber "not sure" panel when `uncertain`** (conf < 0.90 — the Week 5 leftover), business aspect hits + matched keywords, active emotions, consent checkbox → saves to DB |
+| Test data | Benchmark the **live API** on user data: **(1) paste text** (optionally with `negative\|text` labels for accuracy) or **(2) upload a CSV** (text/comment/sentence + label/sentiment/polarity columns) or the built-in 989-row held-out set. Threaded with a progress bar → accuracy, macro-F1, per-class F1, confusion matrix, by-language, uncertain analysis; report JSON saved/downloadable |
+| Ask the AI agent | Chat that discusses the latest result ("why positive?", "is it uncertain?", "what was it about?") — offline rule-based explainer (no key needed); set `AGENT_API_URL` + `AGENT_API_KEY` (OpenAI-compatible) in the environment to use a real LLM, with offline fallback |
+| Feedback | Admin-only table of stored feedback rows |
+
+Components: `app/api_client.py` (pure HTTP client, token passed per request),
+`app/unseen_eval.py` (evaluation logic, no Streamlit), `app/ai_agent.py`
+(explainer + optional LLM), `app/dashboard_utils.py` (cached client + auth).
+
+Notes: the full 989-row run needs the API started with
+`API_PREDICT_LIMIT=1000/minute` (default 120/min); one bug fixed during the
+week — evaluation requests now send the bearer token (were 401-ing).
 
 ---
 
@@ -474,9 +500,11 @@ tests/                 115 tests (app + scripts + aspects + API security)
 7. ~~**Polish: grow aspect keyword dictionaries**~~ done: +30 keywords mined from the real corpus (data-backed, +24 tests)
 8. ~~**OOD guard**~~ done: `uncertain` flag on every prediction when confidence < 0.90 (`config.yaml` `uncertainty_threshold`) — UI/ask-user state
 9. ~~**Re-check calibration on v2**~~ done: ECE 0.0863 (val) / 0.1127 (unseen held-out); ≥0.90 bin = 0.91/0.89 acc — threshold 0.90 confirmed
-10. **Frontend only**: consume `uncertain` in the UI (show neutral/ask-user state instead of a guess)
+10. ~~**Frontend only**: consume `uncertain` in the UI~~ done — Streamlit dashboard, Week 6
 
 ## Changelog
+
+- **2026-08-07 (Week 6 — Streamlit dashboard + AI agent):** `app/` dashboard over the hardened API: login/register (new `POST /auth/register`, self-registration is always `User` role), Analyze page with the `uncertain` OOD state, Test data page (paste text / upload CSV / built-in 989 benchmark through the live API with progress + accuracy/confusion/uncertain analysis + JSON report), Ask-the-AI-agent chat on the latest result (offline explainer, LLM via `AGENT_API_URL`/`AGENT_API_KEY` with fallback), Admin feedback table, `.streamlit/config.toml` theme. Fixed the evaluation-requests 401 (token was not being sent). **178/178 tests pass.** Run: `.venv\Scripts\streamlit run app\dashboard.py`.
 
 - **2026-08-06 (Docker + polish + OOD guard):** Docker verified — `docker-compose.yml` (`api` + `db`) built and run; health/login/predict through the container confirmed. Aspect dictionaries grown from the real corpus (co-occurrence mining on 18,771 comments): Price +បង់/ប្រូម៉ូសិន/pay/deal/sale, Service +អតិថិជន/អ្នកលក់/ម្ចាស់ហាង/seller/owner/customer, Quality +ប្រើប្រាស់/ខូច/នាំចូល/រឹងមាំ/broken/defective, Authenticity +ចម្លង/ត្រាប់/knockoff/dupe, Delivery +បញ្ជា/មកដល់/order/tracking (+24 tests). OOD guard: `predict_sentiment` now returns `uncertain` (conf < `model.uncertainty_threshold` 0.90), exposed in `PredictResponse` schema (+5 tests). Calibration re-checked on v2: val ECE 0.0863, unseen held-out ECE 0.1127; ≥0.90 bin = 0.9095 / 0.8911 acc — threshold confirmed; `check_calibration.py` now uses config model dir (`--model-dir`, `--report-name`). **144/144 tests pass.**
 

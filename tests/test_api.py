@@ -79,6 +79,52 @@ def test_login_empty_fields_rejected():
     assert r.status_code == 422
 
 
+# ---- auth / register --------------------------------------------------------
+
+def test_register_success(monkeypatch):
+    monkeypatch.setattr(
+        "src.common.db.register_user",
+        lambda **kw: 42,
+    )
+    r = client.post(
+        "/auth/register",
+        json={"username": "newbie", "password": "secret123", "full_name": "New User"},
+    )
+    assert r.status_code == 201
+    d = r.json()
+    assert d["user_id"] == 42
+    assert d["role"] == "User"
+
+
+def test_register_never_mints_admin(monkeypatch):
+    captured = {}
+
+    def fake_register(**kw):
+        captured.update(kw)
+        return 7
+
+    monkeypatch.setattr("src.common.db.register_user", fake_register)
+    r = client.post("/auth/register", json={"username": "newuser", "password": "secret123"})
+    assert r.status_code == 201
+    assert captured["role"] == "User"
+
+
+def test_register_conflict_409(monkeypatch):
+    def boom(**kw):
+        raise Exception("duplicate key")
+
+    monkeypatch.setattr("src.common.db.register_user", boom)
+    r = client.post("/auth/register", json={"username": "taken", "password": "secret123"})
+    assert r.status_code == 409
+
+
+def test_register_weak_password_422():
+    r = client.post("/auth/register", json={"username": "u", "password": "x"})
+    assert r.status_code == 422
+    r = client.post("/auth/register", json={"username": "ab", "password": "secret123"})
+    assert r.status_code == 422  # username too short (min 3)
+
+
 # ---- auth guard on predict --------------------------------------------------
 
 def test_predict_requires_token():

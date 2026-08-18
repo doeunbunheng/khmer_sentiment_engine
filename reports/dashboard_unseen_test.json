@@ -1,0 +1,128 @@
+{
+  "endpoint": "http://127.0.0.1:8000",
+  "dataset": "data/external_splits/test_ext.csv (max_rows=989)",
+  "rows": 989,
+  "errors": 989,
+  "accuracy": 0.092,
+  "macro_f1": 0.0562,
+  "per_class": {
+    "negative": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 321
+    },
+    "neutral": {
+      "precision": 0.092,
+      "recall": 1.0,
+      "f1": 0.1685,
+      "support": 91
+    },
+    "positive": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 577
+    }
+  },
+  "confusion_matrix": {
+    "rows": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "cols": [
+      "negative",
+      "neutral",
+      "positive"
+    ],
+    "values": [
+      [
+        0,
+        321,
+        0
+      ],
+      [
+        0,
+        91,
+        0
+      ],
+      [
+        0,
+        577,
+        0
+      ]
+    ]
+  },
+  "by_language": {
+    "khmer": {
+      "rows": 869,
+      "accuracy": 0.084,
+      "macro_f1": 0.0517
+    },
+    "mixed": {
+      "rows": 120,
+      "accuracy": 0.15,
+      "macro_f1": 0.087
+    }
+  },
+  "uncertain_analysis": {
+    "uncertain_rows": 0,
+    "uncertain_accuracy": null,
+    "confident_rows": 989,
+    "confident_accuracy": 0.092
+  },
+  "sample_errors": [
+    {
+      "row": 1,
+      "text": "\"កើតមកខុសគេ\" ជាពាក្យដែលខ្ញុំតែងតែទទួលបានពីមនុស្សជុំវិញខ្លួន រហូតធ្វើខ្ញុំមានអារម្មណ៍សង្ស័យលើខ្លួនឯង",
+      "error": "('__error__:API error 401: missing bearer token', False, None)"
+    },
+    {
+      "row": 2,
+      "text": "(ខេត្តប៉ៃលិន)៖ ផលដំណាំរបស់ប្រជាកសិករជាង៧០០ហិកតា បានទទួលរងនូវការខូចខាតយ៉ាងធ្ងន់ធ្ងរ បន្ទាប់ពី ជំនន់ទឹកភ្លៀងបានវាយប្រហារ ស",
+      "error": "('__error__:API error 401: missing bearer token', False, None)"
+    },
+    {
+      "row": 3,
+      "text": "(គុនខ្មែរ)៖ បន្ទាប់ពីលោកគ្រូស៊ន អេលីត បង្ហាញបេក្ខភាពតារាគុនខ្មែរ៧រូប សម្រាប់ព្រឹត្តិការណ៍ប្រកួតកីឡាប្រដាល់គុនខ្មែរកម្រិត",
+      "error": "('__error__:API error 401: missing bearer token', False, None)"
+    },
+    {
+      "row": 4,
+      "text": "(គុនខ្មែរ)៖ សហព័ន្ធប្រដាល់គុនខ្មែរនៅប្រទេសរុស្ស៊ី ដែលមានលោក អូឡេក គូឌ្រីនស្គី Oleg Kudrinskiy ជាប្រមុខ បានរៀបចំព្រឹត្តិក",
+      "error": "('__error__:API error 401: missing bearer token', False, None)"
+    },
+    {
+      "row": 5,
+      "text": "(ភ្នំពេញ)៖ ការបើកយុទ្ធនាការបង្រកាបល្បែងខុសច្បាប់នៅកម្ពុជា និងការរឹតបណ្តឹងច្បាប់ ស្តីពីការគ្រប់គ្រងល្បែងពាណិជ្ជកម្ម គឺជាក",
+      "error": "('__error__:API error 401: missing bearer token', False, None)"
+    },
+    {
+      "row": 6,
+      "text": "(ភ្នំពេញ)៖ ក្រៅពីការអបអរសាទរពីសំណាក់ប្រជាពលរដ្ឋកម្ពុជា និងពលរដ្ឋមីយ៉ាន់ម៉ាស្រឡាញ់សន្តិភាព ពេលនេះប្រទេសមួយចំនួនរួមនឹងបណ្ត",
+      "error": "('__error__:API error 401: missing bearer token', False, None)"
+    },
+    {
+      "row": 7,
+      "text": "(ភ្នំពេញ)៖ ភ្លាមៗក្រោយការជ្រើសតាំងជាផ្លូវការជាអនាគតបេក្ខជននាយករដ្ឋមន្ត្រីរបស់គណបក្សប្រជាជនកម្ពុជា លោក ហ៊ុន ម៉ាណែត ពិតជាម",
+      "error": "('__error__:API error 401: missing bearer token', False, None)"
+    },
+    {
+      "row": 8,
+      "text": "(ភ្នំពេញ)៖ ឯកឧត្តមឧបនាយករដ្ឋមន្ត្រី អូន ព័ន្ធមុនីរ័ត្ន រដ្ឋមន្ត្រីក្រសួងសេដ្ឋកិច្ច និងហិរញ្ញវត្ថុ និងជារដ្ឋមន្ត្រីស្តីទី",
+      "error": "('__error__:API error 401: missing bearer token', False, None)"
+    },
+    {
+      "row": 9,
+      "text": "(ភ្នំពេញ)៖បន្ទាប់ពីមានកិច្ចប្រជុំត្រួតពិនិត្យផ្ទៃក្នុងពីសំណាក់ក្រុមការងារកិច្ចការច្បាប់ នៃប.ស.ស. លើសេចក្តីព្រាងអនុក្រឹត្",
+      "error": "('__error__:API error 401: missing bearer token', False, None)"
+    },
+    {
+      "row": 10,
+      "text": "(រាជធានីភ្នំពេញ) ៖ កម្ពុជា បានសម្តែងការព្រួយបាម្ភបន្ទាប់ពីកូរ៉េខាងជើង បានបាញ់់សាកល្បងនូវកាំជ្រួចមីស៊ីលផ្លោងនាថ្ងៃទី៤ ខែត",
+      "error": "('__error__:API error 401: missing bearer token', False, None)"
+    }
+  ],
+  "sample_wrong": []
+}
