@@ -611,3 +611,34 @@ Update_Project_Internship/
 ```
 
 ---
+
+
+### Resources & references (models, data, tools)
+
+Everything below is used directly in this project — base models, training
+data, and libraries:
+
+| Resource | What it is | Where we use it |
+|---|---|---|
+| [xlm-roberta-base](https://huggingface.co/xlm-roberta-base) | Multilingual transformer (100 languages, incl. Khmer) — our **base model** | Fine-tuned → `models/khmer-sentiment-3class-v2` (the production sentiment model) |
+| [5oni7a/Khmer-Profanity](https://huggingface.co/datasets/5oni7a/Khmer-Profanity) | ~18.7k labeled Khmer food-review comments — **main training data** | Cleaned → `data/labeled/external_processed.csv` (18,771 rows) |
+| [ye-kyaw-thu/kh-polarity](https://github.com/ye-kyaw-thu/kh-polarity) | iSAI-NLP annotated Khmer polarity corpus (news/politics) — **unseen benchmark** | Mixed 7,905 rows into training (v2); 989 rows held out for external validation |
+| [songhieng/khmer-xlmr-base-sentimental-multi-label](https://huggingface.co/songhieng/khmer-xlmr-base-sentimental-multi-label) | Khmer multi-label emotion model (8 emotions) | Cached at `models/khmer-aspects-multilabel/` → aspect analysis |
+| [tykea/khmer-text-sentiment-analysis-roberta](https://huggingface.co/tykea/khmer-text-sentiment-analysis-roberta) | Khmer 2-class sentiment model (positive/negative) | Fallback path (`predict_fallback`) when the production model cannot load |
+| [khmer-nltk](https://github.com/VietAI/khmer-nltk) | Khmer word segmentation + POS | `src/preprocessing/segment.py`; the AI agent's topic discovery |
+| [Hugging Face transformers](https://github.com/huggingface/transformers) | Model training / inference framework | All model loading, fine-tuning (`train_3class.py`), evaluation |
+| [FastAPI](https://fastapi.tiangolo.com/) + [uvicorn](https://www.uvicorn.org/) | Python web API | `src/api.py` — the production prediction server |
+| [Streamlit](https://streamlit.io/) | Python dashboard framework | `app/` — the user-facing dashboard |
+| [PostgreSQL](https://www.postgresql.org/) | Database | Users, anonymized feedback, analysis records (`src/db/schema.sql`) |
+| [Ollama](https://ollama.com) + [Qwen 2.5 3B](https://ollama.com/library/qwen2.5) | Local LLM for the chat assistant | Auto-detected local AI (no key/internet) in "Ask the AI agent" |
+
+**Methodology references** — the design decisions in this project follow
+established practice:
+
+- Confidence-based abstention (`uncertain` when conf < 0.90) — the
+  model never silently guesses; see the **Calibration & robustness**
+  section (ECE 0.086, ≥0.90 bin = 0.91 acc).
+- External / out-of-domain validation — the v1 → v2 retrain story
+  (0.4014 → 0.8241 on unseen data) is documented in the **Week 5**
+  section and `docs/week5_log.md`.
+- Project repository: https://github.com/doeunbunheng/khmer_sentiment_engine
