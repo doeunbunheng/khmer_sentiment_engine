@@ -29,12 +29,12 @@ on GitHub (https://github.com/doeunbunheng/khmer_sentiment_engine):
 | Week | What was done | Result |
 |---|---|---|
 | 1 | Collected and cleaned ~18,771 labeled Khmer comments; split into train / validation / test | Clean dataset + 3 stratified splits |
-| 2 | Built sentiment detection (Khmer/English/mixed) with automatic fallback when the cloud API failed | 35/35 tests pass |
-| 3 | Added PostgreSQL database + secure login/register + anonymized feedback storage (with user consent) | 52/52 tests pass |
-| 4 | Fine-tuned our own 3-class model (xlm-roberta-base, on this PC's GPU) — the old pipeline scored 0.6821, the new model **0.8211** accuracy; checked that a more complex "stacking ensemble" gave no gain (documented honestly) | 53/53 tests pass |
-| 5 | Added aspect analysis (5 business aspects + 8 emotions), tested the model on a **truly unseen** news/politics corpus (found a real weakness: 0.4165 accuracy → retrained a mixed-domain "v2" model → **0.8241** on unseen data), built a FastAPI web server, secured it (login tokens, rate limits, admin-only feedback), and packaged it in Docker | 144/144 tests pass |
-| 6 | Built a complete **web dashboard** (Streamlit): login, live analysis, testing user's own data, an **AI chat agent** that explains results (offline explainer / local PC AI / one-click Gemini-GPT), and admin feedback view | 178/178 tests pass |
-| 6b | Upgraded the AI agent to work on **any dataset** (not just shopping): it discovers topics from the text itself, only gives shopping advice for shopping data, and switches between 3 AI providers with one click | **233/233 tests pass** |
+| 2 | Built sentiment detection (Khmer/English/mixed) with automatic fallback when the cloud API failed | 
+| 3 | Added PostgreSQL database + secure login/register + anonymized feedback storage (with user consent) | 
+| 4 | Fine-tuned our own 3-class model (xlm-roberta-base, on this PC's GPU) — the old pipeline scored 0.6821, the new model **0.8211** accuracy; checked that a more complex "stacking ensemble" gave no gain (documented honestly) | 
+| 5 | Added aspect analysis (5 business aspects + 8 emotions), tested the model on a **truly unseen** news/politics corpus (found a real weakness: 0.4165 accuracy → retrained a mixed-domain "v2" model → **0.8241** on unseen data), built a FastAPI web server, secured it (login tokens, rate limits, admin-only feedback), and packaged it in Docker | 
+| 6 | Built a complete **web dashboard** (Streamlit): login, live analysis, testing user's own data, an **AI chat agent** that explains results (offline explainer / local PC AI / one-click Gemini-GPT), and admin feedback view |
+| 6b | Upgraded the AI agent to work on **any dataset** (not just shopping): it discovers topics from the text itself, only gives shopping advice for shopping data, and switches between 3 AI providers with one click | 
 
 **Key numbers a supervisor cares about:**
 
@@ -47,9 +47,6 @@ on GitHub (https://github.com/doeunbunheng/khmer_sentiment_engine):
 - Security: tokens, rate limits, login lockout, admin-only access, no personal
   data in logs, consent-gated feedback storage
 
-**What a supervisor can do to see it working:** run the API + dashboard
-(commands in "Run it" below), log in with the demo admin account, paste any
-Khmer/English comment, and click "Ask the AI agent" to chat about the results.
 
 
 
