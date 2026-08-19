@@ -3,12 +3,13 @@
 3-class sentiment (Positive / Negative / Neutral) + aspect analysis for
 Khmer, English, and code-switched consumer comments.
 
-**Status: Week 6 complete** — Streamlit dashboard (`app/`) on top of the
+**Status: Week 6 complete (+ AI agent upgrade)** — Streamlit dashboard (`app/`) on top of the
 hardened API: login/register, live prediction with the **uncertain** OOD state,
 a **Test data** page (paste text / upload CSV / built-in 989-row benchmark run
 through the live API), an **Ask the AI agent** chat that explains each result
-(offline explainer + optional LLM key), Admin feedback view, and a new
-`POST /auth/register` endpoint. 178/178 tests pass.
+(domain-aware offline explainer + local PC AI + optional one-click cloud
+providers), Admin feedback view, and a new
+`POST /auth/register` endpoint. 233/233 tests pass.
 
 ---
 
@@ -211,7 +212,7 @@ Sources: `reports/phase2_val.json`, `reports/phase4_test.json`, `reports/phase3_
 | Log in / Create account | New `POST /auth/register` endpoint (self-registration can never mint an Admin); tokens stored per session |
 | Analyze a comment | Type/example Khmer/English/mixed text → sentiment badge + confidence, **amber "not sure" panel when `uncertain`** (conf < 0.90 — the Week 5 leftover), business aspect hits + matched keywords, active emotions, consent checkbox → saves to DB |
 | Test data | Benchmark the **live API** on user data: **(1) paste text** (optionally with `negative\|text` labels for accuracy) or **(2) upload a CSV** (text/comment/sentence + label/sentiment/polarity columns) or the built-in 989-row held-out set. Threaded with a progress bar → accuracy, macro-F1, per-class F1, confusion matrix, by-language, uncertain analysis; report JSON saved/downloadable |
-| Ask the AI agent | Chat that discusses the latest result ("why positive?", "is it uncertain?", "what was it about?") — offline rule-based explainer (no key needed); set `AGENT_API_URL` + `AGENT_API_KEY` (OpenAI-compatible) in the environment to use a real LLM, with offline fallback |
+| Ask the AI agent | Chat that discusses the latest result ("why positive?", "is it uncertain?", "what was it about?") — **domain-aware offline explainer** (works on any dataset, no key needed), **local PC AI** (Ollama + qwen2.5:3b, auto-detected), or **one-click cloud providers** configured in `.env` (`AGENT_*` / `GEMINI_*` / `OPENAI_*`) — with offline fallback on any error |
 | Feedback | Admin-only table of stored feedback rows |
 
 Components: `app/api_client.py` (pure HTTP client, token passed per request),
@@ -221,6 +222,78 @@ Components: `app/api_client.py` (pure HTTP client, token passed per request),
 Notes: the full 989-row run needs the API started with
 `API_PREDICT_LIMIT=1000/minute` (default 120/min); one bug fixed during the
 week — evaluation requests now send the bearer token (were 401-ing).
+
+---
+
+## Week 6b — AI agent: any-dataset awareness + one-click AI providers (done)
+
+The chat assistant was upgraded so it behaves like a general-purpose AI
+(Gemini/GPT style) **grounded on the user's own prediction result** — even
+when the dataset has nothing to do with the 5 built-in business aspects.
+
+### Dataset-adaptive answers (offline explainer)
+
+- **Topic discovery from the text itself** — when the fixed business
+  aspects don't hit, the agent segments the comments (khmer-nltk, regex
+  fallback for English), removes stopwords, and names the most repeated
+  words as the real topics. Education / politics / news / restaurant
+  datasets get answers about *their own words* (e.g. `ព័ត៌មាន`, `រៀន`).
+- **One-sentence class summaries** — "why are comments negative?" answers
+  with one line ("In one sentence: these 13 negative comments are mostly
+  about …") + 3 examples + a **What to do** action line, instead of dumping
+  every comment. Long pasted inputs are truncated, never echoed back.
+- **Commerce-aware advice gating** (`_is_commerce_data`) — shopping advice
+  ("check the supplier", "packing and shipping", "wrong orders") is only
+  given when the comments clearly talk about buying/selling/delivering
+  (ដឹកជញ្ជូន, អីវ៉ាន់, លក់, ទិញ, delivery, product…). Ambiguous words
+  (ពិត "real", តម្លៃ "value", គុណភាព "quality") no longer trigger it —
+  an education dataset gets neutral investigation advice instead of
+  product-returns advice.
+- **Intent routing** — business advice vs technical ML advice are
+  separated: "what should I do next?" → shop-owner actions; "how to
+  improve the model?" → retrain/labeling/accuracy guidance. Advice words
+  (suggest / idea / recommend / advice) append the action block to class
+  answers. Follow-ups ("why?", "what about this one?") resolve to the
+  comment just discussed via conversation history.
+
+### Bug fixed — Khmer topic discovery silently failed
+
+`isalnum()` returns `False` for Khmer words containing combining marks
+(៌ ្ ំ …), so every Khmer content word was filtered out and the agent
+claimed "no topic repeats" on Khmer-only data. Fixed by keeping tokens
+with at least one letter; regression tests assert Khmer words with marks
+survive segmentation.
+
+### Three AI tiers — one-click switching in the UI
+
+| Tier | Setup | When used |
+|---|---|---|
+| ① Offline explainer | none | always available; used on any LLM error |
+| ② Local PC AI | install [Ollama](https://ollama.com) + `ollama pull qwen2.5:3b` | **auto-detected** at `http://127.0.0.1:11434/v1` — no key, no internet |
+| ③ Cloud providers | keys in `.env` | clickable options: "OpenRouter (.env AI)", "Google Gemini — key ready", "OpenAI GPT — key ready" |
+
+`.env` provider slots (keys never appear in the UI or the repo):
+
+```ini
+AGENT_API_URL=https://openrouter.ai/api/v1
+AGENT_API_KEY=sk-or-v1-...        # any OpenAI-compatible key
+AGENT_MODEL=nvidia/nemotron-3.5-lightning:free
+GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/openai
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
+OPENAI_API_URL=https://api.openai.com/v1
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
+```
+
+The UI's **AI settings** panel explains in plain language (English +
+ខ្មែរ) that nothing needs to be done — the local AI already answers. Users
+pick a provider by clicking a radio button; URL/model come from `.env`.
+
+**233/233 tests pass** — including: per-row questions, follow-ups,
+business-vs-technical advice, show-all lists, text-term fallback, Khmer
+combining-mark segmentation, commerce gating (education dataset gets no
+shopping advice), and local-LLM detection (monkeypatched).
 
 ---
 
@@ -468,23 +541,73 @@ file first: `--data-binary "@path\to\body.json"`.
 ## Structure
 
 ```
-src/preprocessing/     clean.py · segment.py · language_detect.py · anonymize.py
-src/common/            config.py (paths from config.yaml) · db.py (psycopg2)
-src/db/schema.sql      PostgreSQL tables + triggers + functions (pgcrypto bcrypt)
-src/models/            hf_api.py · local_model.py (predict / predict_fallback) ·
-                       translate_baseline.py · aspects.py (rules + emotions)
-src/predict.py         detect → 3-class local model (no translate / no threshold)
-src/api.py             FastAPI server: GET /health · POST /auth/login ·
-                       POST /predict · GET /feedback · GET /docs
-src/common/security.py HMAC-signed tokens + login lockout (API_SECRET from .env)
-scripts/               prepare_splits · evaluate_baseline · train_3class ·
-                       stack_phase3 · evaluate_final · evaluate_external ·
-                       api_test_unseen · check_calibration ·
-                       compare_en_direct_vs_translate · preflight_check · predict_demo
-data/                  labeled/ (external_processed.csv) · splits/ ·
-                       external_kh_polarity.csv (unseen benchmark) · external_splits/
-docs/                  consent.md · week4_log.md · week5_log.md
-tests/                 115 tests (app + scripts + aspects + API security)
+Update_Project_Internship/
+|-- app/
+|   |-- dashboard.py              # Streamlit entry (run this)
+|   |-- app_pages/
+|   |   |-- chat_agent.py         # Ask the AI agent page (AI settings panel)
+|   |   |-- feedback.py           # Admin feedback page
+|   |   |-- predict.py            # Analyze a comment page
+|   |   `-- unseen_test.py        # Test data page (paste/CSV/989 benchmark)
+|   |-- ai_agent.py               # offline explainer + local/cloud LLM tiers
+|   |-- api_client.py             # pure HTTP client (token per request)
+|   |-- dashboard_utils.py        # cached client + auth
+|   `-- unseen_eval.py            # evaluation logic (no Streamlit)
+|-- data/
+|   |-- raw/                      # source files
+|   |-- labeled/
+|   |   `-- external_processed.csv     # 18,771 labeled rows
+|   |-- splits/                   # train 15,016 / val 1,877 / test 1,878
+|   |-- external_splits/          # train_mix 7,905 / val_mix 988 / test_ext 989 (held-out)
+|   `-- external_kh_polarity.csv  # 9,882 unseen benchmark rows
+|-- src/
+|   |-- preprocessing/
+|   |   |-- clean.py
+|   |   |-- segment.py
+|   |   |-- language_detect.py
+|   |   `-- anonymize.py
+|   |-- models/
+|   |   |-- hf_api.py             # tykea live API + fallback
+|   |   |-- local_model.py        # 3-class xlm-r predict / predict_fallback
+|   |   |-- aspects.py            # 5 business aspects + 8 emotions
+|   |   `-- translate_baseline.py
+|   |-- common/
+|   |   |-- config.py             # paths from config.yaml
+|   |   |-- db.py                 # psycopg2
+|   |   `-- security.py           # HMAC tokens + lockout
+|   |-- db/
+|   |   `-- schema.sql            # tables + triggers + bcrypt functions
+|   |-- predict.py                # detect → 3-class local model (no translate)
+|   `-- api.py                    # FastAPI: /health /auth/login /predict /feedback /docs
+|-- models/
+|   |-- khmer-sentiment-3class/       # v1 (for comparison)
+|   |-- khmer-sentiment-3class-v2/    # v2 — PRODUCTION
+|   |-- khmer-aspects-multilabel/     # songhieng cached
+|   `-- stack_folds/
+|-- scripts/
+|   |-- prepare_splits.py
+|   |-- preflight_check.py
+|   |-- train_3class.py
+|   |-- evaluate_baseline.py
+|   |-- evaluate_final.py
+|   |-- evaluate_external.py
+|   |-- stack_phase3.py
+|   |-- api_test_unseen.py
+|   |-- check_calibration.py
+|   |-- predict_demo.py
+|   `-- compare_en_direct_vs_translate.py
+|-- tests/                           # 233 tests (14 files)
+|-- reports/                         # baseline/val/test/calibration/unseen JSONs
+|-- docs/                            # consent.md · week4_log.md · week5_log.md · week6_log.md
+|-- logs/
+|-- .streamlit/                      # dashboard theme
+|-- config.yaml                      # model paths, uncertainty_threshold 0.90
+|-- requirements.txt
+|-- Dockerfile
+|-- docker-compose.yml               # api + db
+|-- pytest.ini
+|-- .env  /  .env.example            # API_SECRET, DB creds, AI-provider keys (never commit .env)
+`-- README.md
 ```
 
 ---
@@ -503,6 +626,8 @@ tests/                 115 tests (app + scripts + aspects + API security)
 10. ~~**Frontend only**: consume `uncertain` in the UI~~ done — Streamlit dashboard, Week 6
 
 ## Changelog
+
+- **2026-08-19 (AI agent upgrade):** `app/ai_agent.py` + `app/app_pages/chat_agent.py` — the agent now adapts to **any dataset**: text-term topic discovery (khmer-nltk segmentation + stopwords, `_terms_of`/`_frequent_terms`), one-sentence class summaries with "What to do" actions, truncated long inputs, advice intent routing (suggest/idea/recommend), and **commerce-aware advice gating** (`_is_commerce_data`) so shopping advice never leaks into education/politics/health datasets. Fixed a real bug: `isalnum()` drops Khmer words with combining marks (៌ ្ ំ), which silently broke Khmer topic discovery. Three AI tiers in the UI: offline explainer → **local PC AI** (Ollama + `qwen2.5:3b`, auto-detected at `127.0.0.1:11434`, no key/internet) → one-click cloud providers from `.env` (`AGENT_*`, `GEMINI_*`, `OPENAI_*`); `chat()` gained `use_env=False` so the page picks providers explicitly. Simple bilingual AI-settings panel (radio: computer AI / Gemini / GPT / OpenRouter). OpenRouter free model verified live (`nvidia/nemotron-3.5-lightning:free`, no credits needed). **233/233 tests pass.**
 
 - **2026-08-07 (Week 6 — Streamlit dashboard + AI agent):** `app/` dashboard over the hardened API: login/register (new `POST /auth/register`, self-registration is always `User` role), Analyze page with the `uncertain` OOD state, Test data page (paste text / upload CSV / built-in 989 benchmark through the live API with progress + accuracy/confusion/uncertain analysis + JSON report), Ask-the-AI-agent chat on the latest result (offline explainer, LLM via `AGENT_API_URL`/`AGENT_API_KEY` with fallback), Admin feedback table, `.streamlit/config.toml` theme. Fixed the evaluation-requests 401 (token was not being sent). **178/178 tests pass.** Run: `.venv\Scripts\streamlit run app\dashboard.py`.
 

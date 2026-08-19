@@ -241,6 +241,7 @@ if st.button(
                 else f"__error__:{preds[i]['error'] or ''}",
                 preds[i]["uncertain"],
                 preds[i]["confidence"],
+                preds[i].get("aspects") or {},
             )
             for i in labeled_idx
         ]
@@ -351,6 +352,7 @@ if st.button(
                 )
                 for p in preds[: len(texts)]
             ],
+            aspects=[p.get("aspects") or {} for p in preds[: len(texts)]],
         )
         with st.container(horizontal=True):
             st.metric("Rows reviewed", summary["rows"], border=True)
@@ -387,6 +389,6 @@ if st.button(
         icon=":material/forum:",
     ):
         st.session_state.chat_starter = (
-            "Why did it show like this? What happened? What should I do next?"
+            "What happened on this dataset? What should I do next?"
         )
         st.switch_page("app_pages/chat_agent.py")

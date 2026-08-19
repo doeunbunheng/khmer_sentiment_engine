@@ -148,6 +148,12 @@ def _fake_predict(text):
         "sentiment": sent if sent in ("negative", "neutral", "positive") else "neutral",
         "uncertain": rest.startswith("u"),
         "confidence": 0.55 if rest.startswith("u") else 0.95,
+        "aspects": {
+            "business_aspects": {
+                "Price": {"hit": True, "keywords": ["price"]},
+            },
+            "emotions": {"active": ["Anger"], "scores": {"Anger": 0.9}},
+        },
     }
 
 
@@ -163,7 +169,7 @@ class _FakeClient:
 
 def _result_tuple(text):
     r = _fake_predict(text)
-    return (r["sentiment"], r["uncertain"], r["confidence"])
+    return (r["sentiment"], r["uncertain"], r["confidence"], r["aspects"])
 
 
 def test_load_unseen_csv_filters_invalid_labels(tmp_path):
@@ -237,6 +243,7 @@ def test_run_unseen_eval_progress_and_results(monkeypatch):
     assert results[0][0] == "negative"
     assert results[1][2] == 0.95  # confident
     assert results[2][1] is True  # uncertain flag came through
+    assert results[0][3]["business_aspects"]["Price"]["hit"] is True  # aspects
     assert calls and calls[-1] == (3, 3)
     assert len(calls) == 3
 
@@ -281,6 +288,18 @@ def test_build_report_metrics():
     assert len(report["sample_wrong"]) == 2
     assert len(report["per_class"]) == 3
     assert isinstance(report["by_language"], dict)
+
+    # full per-row predictions are present for the AI agent
+    preds = report["predictions"]
+    assert len(preds) == 5
+    first = preds[0]
+    assert set(first).issuperset(
+        {"row", "text", "language", "sentiment", "confidence", "uncertain", "true"}
+    )
+    assert first["row"] == 1 and first["true"] == "negative"
+    assert preds[1]["uncertain"] is True and preds[1]["confidence"] == 0.55
+    assert preds[2]["true"] == "positive" and preds[2]["sentiment"] == "neutral"
+    assert preds[0]["aspects"]["business_aspects"]["Price"]["hit"] is True
 
 
 def test_build_report_counts_errors():
@@ -333,3 +352,22 @@ def test_build_prediction_summary():
     first = summary["predictions"][0]
     assert first["sentiment"] == "positive"
     assert set(first).issuperset({"row", "text", "language", "confidence", "uncertain"})
+
+
+def test_build_prediction_summary_carries_aspects():
+    texts = ["cheap price", "ok"]
+    aspects = [
+        {
+            "business_aspects": {"Price": {"hit": True, "keywords": ["price"]}},
+            "emotions": {"active": ["Joy"], "scores": {"Joy": 0.8}},
+        },
+        {"business_aspects": {}, "emotions": {"active": [], "scores": {}}},
+    ]
+    summary = build_prediction_summary(
+        texts,
+        [("positive", False, 0.95), ("neutral", False, 0.90)],
+        aspects=aspects,
+    )
+    assert summary["predictions"][0]["aspects"]["business_aspects"]["Price"]["hit"]
+    assert summary["predictions"][0]["aspects"]["emotions"]["active"] == ["Joy"]
+    assert "aspects" not in summary["predictions"][1]

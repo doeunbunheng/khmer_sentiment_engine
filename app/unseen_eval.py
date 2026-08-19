@@ -49,7 +49,47 @@ def parse_input_text(block_text, has_labels=False):
     return rows
 
 
-def build_prediction_summary(texts, results):
+def _row_aspects(p, fallback=None):
+    """Aspects/emotions for a row: from the 4th tuple element or a dict.
+
+    Returns {} when nothing meaningful was detected, so the entry simply
+    has no `aspects` key.
+    """
+    if isinstance(p, dict):
+        asp = p.get("aspects") or {}
+    elif len(p) > 3 and p[3]:
+        asp = p[3]
+    else:
+        asp = fallback or {}
+    if not asp:
+        return {}
+    has_biz = any(
+        a.get("hit")
+        for a in (asp.get("business_aspects") or {}).values()
+    )
+    has_emo = bool((asp.get("emotions") or {}).get("active"))
+    return asp if (has_biz or has_emo) else {}
+
+
+def _row_dict(row, text, p, true_label=None, aspects=None):
+    """One per-row prediction entry shared by summary and report."""
+    entry = {
+        "row": row,
+        "text": text,
+        "language": detect_language(text),
+        "sentiment": p[0] if p[0] in LABELS else "neutral",
+        "confidence": round(float(p[2] or 0), 3),
+        "uncertain": bool(p[1]),
+    }
+    if true_label is not None:
+        entry["true"] = true_label
+    asp = _row_aspects(p, aspects)
+    if asp:
+        entry["aspects"] = asp
+    return entry
+
+
+def build_prediction_summary(texts, results, aspects=None):
     """Prediction-only summary (no true labels): distribution + per-row table."""
     rows_out = []
     dist = {"negative": 0, "neutral": 0, "positive": 0}
@@ -64,14 +104,12 @@ def build_prediction_summary(texts, results):
         if p[1]:
             uncertain += 1
         rows_out.append(
-            {
-                "row": i + 1,
-                "text": texts[i],
-                "language": detect_language(texts[i]),
-                "sentiment": sent,
-                "confidence": round(float(p[2] or 0), 3),
-                "uncertain": p[1],
-            }
+            _row_dict(
+                i + 1,
+                texts[i],
+                (p[0], p[1], p[2]),
+                aspects=aspects[i] if aspects else None,
+            )
         )
     return {
         "rows": len(texts),
@@ -148,9 +186,10 @@ def _fetch(client, text, results, idx, token=None):
             r.get("sentiment", "neutral"),
             bool(r.get("uncertain", False)),
             r.get("confidence"),
+            r.get("aspects") or {},
         )
     except Exception as exc:
-        results[idx] = (f"__error__:{exc}", False, None)
+        results[idx] = (f"__error__:{exc}", False, None, {})
 
 
 def run_unseen_eval(client, df, max_rows=None, workers=8, progress_cb=None, token=None):
@@ -194,6 +233,7 @@ def predict_rows(client, texts, workers=8, progress_cb=None, token=None):
                 "sentiment": r.get("sentiment"),
                 "confidence": r.get("confidence"),
                 "uncertain": bool(r.get("uncertain", False)),
+                "aspects": r.get("aspects") or {},
                 "error": None,
             }
         except Exception as exc:
@@ -203,6 +243,7 @@ def predict_rows(client, texts, workers=8, progress_cb=None, token=None):
                 "sentiment": None,
                 "confidence": None,
                 "uncertain": False,
+                "aspects": {},
                 "error": str(exc)[:120],
             }
 
@@ -257,6 +298,18 @@ def build_report(texts, y_true, results, dataset="", endpoint=""):
         {"row": i + 1, "text": texts[i][:120], "error": str(results[i])[:120]}
         for i in errors[:10]
     ]
+    predictions = []
+    for i in range(len(texts)):
+        rp = results[i] or ("neutral", False, None, {})
+        predictions.append(
+            _row_dict(
+                i + 1,
+                texts[i],
+                (y_pred_raw[i], rp[1], rp[2]),
+                true_label=y_true[i],
+                aspects=rp[3] if len(rp) > 3 else None,
+            )
+        )
     sample_wrong = []
     for i in range(len(texts)):
         if len(sample_wrong) >= 10:
@@ -308,4 +361,5 @@ def build_report(texts, y_true, results, dataset="", endpoint=""):
         },
         "sample_errors": sample_errors,
         "sample_wrong": sample_wrong,
+        "predictions": predictions,
     }
