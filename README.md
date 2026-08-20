@@ -541,7 +541,7 @@ e.g. mixed text → positive 0.833, Service aspect hit, anger emotion active).
 ### Step-by-step API test guide
 
 Prereqs: uvicorn running (`.venv\Scripts\uvicorn src.api:app --reload --host 127.0.0.1 --port 8001`),
-PostgreSQL seeded (`src/db/schema.sql` — `demo_admin` / `132336BV132336`, `demo_user` / `user@132123`).
+PostgreSQL seeded (`src/db/schema.sql` — `demo_admin` / `password_admin`, `demo_user` / `password_user`).
 
 1. **Health (no auth):** `GET /health` → `{"status":"ok","model":"khmer-sentiment-3class-v2","db":true}`
 2. **Login:** `POST /auth/login` with `{"username":"demo_admin","password":"132336BV132336"}`
