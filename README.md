@@ -63,6 +63,154 @@ on GitHub (https://github.com/doeunbunheng/khmer_sentiment_engine):
 
 ---
 
+## Executive summary — what was done (read this first)
+
+**The project:** "Khmer Sentiment Engine" — a machine-learning system that
+automatically reads Khmer, English, and mixed (code-switched) customer
+comments (e.g. from Facebook, Shopee, Google Reviews) and tells a business:
+**(1)** whether each comment is positive / negative / neutral, **(2)** what it
+is about (5 business aspects: Price, Service, Product Quality, Authenticity,
+Delivery + 8 emotions), **(3)** an honest "not sure" flag when the model's
+confidence is low, and **(4)** an AI chat assistant the owner can ask questions
+about the results in plain Khmer or English.
+
+**Built over 6 weeks** (July–August 2026), everything is in this repository and
+on GitHub (https://github.com/doeunbunheng/khmer_sentiment_engine):
+
+| Week | What was done | Result |
+|---|---|---|
+| 1 | Collected and cleaned ~18,771 labeled Khmer comments; split into train / validation / test | Clean dataset + 3 stratified splits |
+| 2 | Built sentiment detection (Khmer/English/mixed) with automatic fallback when the cloud API failed | 35/35 tests pass |
+| 3 | Added PostgreSQL database + secure login/register + anonymized feedback storage (with user consent) | 52/52 tests pass |
+| 4 | Fine-tuned our own 3-class model (xlm-roberta-base, on this PC's GPU) — the old pipeline scored 0.6821, the new model **0.8211** accuracy; checked that a more complex "stacking ensemble" gave no gain (documented honestly) | 53/53 tests pass |
+| 5 | Added aspect analysis (5 business aspects + 8 emotions), tested the model on a **truly unseen** news/politics corpus (found a real weakness: 0.4165 accuracy → retrained a mixed-domain "v2" model → **0.8241** on unseen data), built a FastAPI web server, secured it (login tokens, rate limits, admin-only feedback), and packaged it in Docker | 144/144 tests pass |
+| 6 | Built a complete **web dashboard** (Streamlit): login, live analysis, testing user's own data, an **AI chat agent** that explains results (offline explainer / local PC AI / one-click Gemini-GPT), and admin feedback view | 178/178 tests pass |
+| 6b | Upgraded the AI agent to work on **any dataset** (not just shopping): it discovers topics from the text itself, only gives shopping advice for shopping data, and switches between 3 AI providers with one click | **233/233 tests pass** |
+
+**Key numbers a supervisor cares about:**
+
+- Final model: `xlm-roberta-base` fine-tuned, 3-class, "v2" in production
+- Test accuracy (in-domain, 1,878 rows): **0.8333**
+- Accuracy on unseen data (989 held-out news/politics rows): **0.8241**
+  (fixed a real "domain shift" problem: old model 0.4014)
+- Live web API gives **exactly the same results** as offline (989/989 rows identical)
+- **233/233 automated tests pass** — quality gate for every change
+- Security: tokens, rate limits, login lockout, admin-only access, no personal
+  data in logs, consent-gated feedback storage
+
+**What a supervisor can do to see it working:** run the API + dashboard
+(commands in "Run it" below), log in with the demo admin account, paste any
+Khmer/English comment, and click "Ask the AI agent" to chat about the results.
+
+---
+
+## Project reference — for the supervisor
+
+**Khmer Sentiment Engine** — a complete machine-learning system that
+automatically reads Khmer, English, and mixed (code-switched) customer
+comments and tells a business what customers feel and why.
+
+### Problem it solves
+
+Businesses collect thousands of comments on Facebook / Shopee / Google
+Reviews, but nobody has time to read them all. This engine replaces
+manual reading with: **(1)** a sentiment score for every comment
+(positive / negative / neutral), **(2)** what the comment is about (5
+business aspects: Price, Service, Product Quality, Authenticity,
+Delivery, + 8 emotions), **(3)** a "not sure" flag when the model is
+unsure (confidence < 90%), and **(4)** an AI assistant the owner can ask
+questions about the results in plain language — in Khmer or English.
+
+### Key results (honest numbers)
+
+| Item | Result |
+|---|---|
+| Final model | xlm-roberta-base fine-tuned, 3-class, **v2 in production** |
+| In-domain test accuracy (1,878 rows) | **0.8333** |
+| Unseen-domain accuracy (989 held-out news/politics rows) | **0.8241** (old v1: 0.4014 — domain shift fixed) |
+| Baseline before the fine-tuned model | 0.6821 |
+| Calibration | ECE 0.086 (val); uncertainty threshold 0.90 confirmed |
+| Live API = offline parity | 989/989 rows identical (0 errors) |
+| Tests | **233/233 passing** |
+
+### Architecture (3 layers)
+
+```
+Streamlit dashboard  →  FastAPI server  →  PostgreSQL
+(app/)                 (src/api.py)       (feedback loop, users)
+                            │
+                    Sentiment model (xlm-r 3-class v2)
+                    Aspects (rules) + Emotions (songhieng)
+                    AI agent (offline explainer / local Ollama /
+                              cloud Gemini/GPT — one click)
+```
+
+### What the user can do today (demo)
+
+1. **Login / Register** — secure accounts (`demo_admin` / `132336BV132336`)
+2. **Analyze a comment** — paste any Khmer/English comment → sentiment,
+   confidence, aspects, emotions; "not sure" state when ambiguous
+3. **Test data** — paste text, upload a CSV, or run the built-in 989-row
+   benchmark through the live API → accuracy, confusion matrix,
+   uncertain analysis, downloadable report
+4. **Ask the AI agent** — chat about any result: "why are comments
+   negative?", "show me the uncertain ones", "what should I do next?" —
+   answers adapt to the actual dataset (works for shops AND for
+   education/news/other data), powered by the PC's local AI by default
+   (no key, no internet) with optional one-click Gemini/GPT
+5. **Feedback** (Admin) — see every saved prediction
+
+### Security & engineering quality
+
+- HMAC-signed bearer tokens, rate limits, login lockout, Admin-only
+  feedback, CORS lockdown, no-PII logs
+- Anonymized feedback storage with consent gate
+- Calibration-driven design: low-confidence comments are flagged, never
+  silently guessed
+- Verified generalization on a truly unseen corpus (0 overlap with
+  training data) — documented limitation: the model is strongest on
+  consumer-review-style text
+
+### Resources & references (models, data, tools)
+
+Everything below is used directly in this project — base models, training
+data, and libraries:
+
+| Resource | What it is | Where we use it |
+|---|---|---|
+| [xlm-roberta-base](https://huggingface.co/xlm-roberta-base) | Multilingual transformer (100 languages, incl. Khmer) — our **base model** | Fine-tuned → `models/khmer-sentiment-3class-v2` (the production sentiment model) |
+| [5oni7a/Khmer-Profanity](https://huggingface.co/datasets/5oni7a/Khmer-Profanity) | ~18.7k labeled Khmer food-review comments — **main training data** | Cleaned → `data/labeled/external_processed.csv` (18,771 rows) |
+| [ye-kyaw-thu/kh-polarity](https://github.com/ye-kyaw-thu/kh-polarity) | iSAI-NLP annotated Khmer polarity corpus (news/politics) — **unseen benchmark** | Mixed 7,905 rows into training (v2); 989 rows held out for external validation |
+| [songhieng/khmer-xlmr-base-sentimental-multi-label](https://huggingface.co/songhieng/khmer-xlmr-base-sentimental-multi-label) | Khmer multi-label emotion model (8 emotions) | Cached at `models/khmer-aspects-multilabel/` → aspect analysis |
+| [tykea/khmer-text-sentiment-analysis-roberta](https://huggingface.co/tykea/khmer-text-sentiment-analysis-roberta) | Khmer 2-class sentiment model (positive/negative) | Fallback path (`predict_fallback`) when the production model cannot load |
+| [khmer-nltk](https://github.com/VietAI/khmer-nltk) | Khmer word segmentation + POS | `src/preprocessing/segment.py`; the AI agent's topic discovery |
+| [Hugging Face transformers](https://github.com/huggingface/transformers) | Model training / inference framework | All model loading, fine-tuning (`train_3class.py`), evaluation |
+| [FastAPI](https://fastapi.tiangolo.com/) + [uvicorn](https://www.uvicorn.org/) | Python web API | `src/api.py` — the production prediction server |
+| [Streamlit](https://streamlit.io/) | Python dashboard framework | `app/` — the user-facing dashboard |
+| [PostgreSQL](https://www.postgresql.org/) | Database | Users, anonymized feedback, analysis records (`src/db/schema.sql`) |
+| [Ollama](https://ollama.com) + [Qwen 2.5 3B](https://ollama.com/library/qwen2.5) | Local LLM for the chat assistant | Auto-detected local AI (no key/internet) in "Ask the AI agent" |
+
+**Methodology references** — the design decisions in this project follow
+established practice:
+
+- Confidence-based abstention (`uncertain` when conf < 0.90) — the
+  model never silently guesses; see the **Calibration & robustness**
+  section (ECE 0.086, ≥0.90 bin = 0.91 acc).
+- External / out-of-domain validation — the v1 → v2 retrain story
+  (0.4014 → 0.8241 on unseen data) is documented in the **Week 5**
+  section and `docs/week5_log.md`.
+- Project repository: https://github.com/doeunbunheng/khmer_sentiment_engine
+
+### Run it
+
+```bash
+./.venv/Scripts/python.exe -m uvicorn src.api:app --host 127.0.0.1 --port 8000  # API
+./.venv/Scripts/python.exe -m streamlit run app/dashboard.py                      # dashboard
+./.venv/Scripts/python.exe -m pytest tests -q                                     # 233 tests
+```
+
+---
+
 ## Quick start
 
 ```bash
@@ -254,7 +402,7 @@ Sources: `reports/phase2_val.json`, `reports/phase4_test.json`, `reports/phase3_
 `app/` — a full UI on top of the hardened API, run with:
 
 ```bash
-.venv\Scripts\streamlit run app\dashboard.py        # http://localhost:8501
+./.venv/Scripts/python.exe -m streamlit run app/dashboard.py        # http://localhost:8501
 ```
 
 | Page | What it does |

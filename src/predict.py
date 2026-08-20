@@ -62,6 +62,20 @@ def predict_and_save(text, user_id=None, consent=False, names=None):
     result = predict_sentiment(text)
     if user_id is None:
         return result
+    # Audit log: record every authenticated prediction (anonymized, no PII,
+    # no consent needed). A DB failure never breaks the prediction.
+    try:
+        common_db.log_analysis(
+            user_id=user_id,
+            text=text,
+            language=result["language"],
+            sentiment=result["sentiment"],
+            confidence=result["confidence"],
+            aspects=result.get("aspects", {}),
+            source="web",
+        )
+    except Exception:
+        pass
     # Attempt to save feedback when a user_id is provided. save_feedback
     # will validate consent and anonymization.
     try:

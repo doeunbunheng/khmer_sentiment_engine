@@ -98,3 +98,29 @@ def test_saved_row_roundtrips_aspects_json(user_id):
     rows = db.fetch_feedback(user_id=user_id, limit=500)
     row = next(r for r in rows if r[0] == fid)
     assert row[9] == aspects
+
+
+def test_log_analysis_returns_id(user_id):
+    aid = db.log_analysis(
+        user_id,
+        text="Call me 012-345-678",
+        language="english",
+        sentiment="positive",
+        confidence=0.81,
+    )
+    assert aid is not None
+
+
+def test_logged_analysis_has_anonymized_text(user_id):
+    aid = db.log_analysis(
+        user_id,
+        text="email a@b.com please  https://example.com/x",
+        language="english",
+        sentiment="neutral",
+        confidence=0.4,
+    )
+    rows = db.fetch_analysis(user_id=user_id, limit=50)
+    row = next(r for r in rows if r[0] == aid)
+    assert "a@b.com" not in row[2]
+    assert "example.com" not in row[3]
+    assert row[8] == "web"

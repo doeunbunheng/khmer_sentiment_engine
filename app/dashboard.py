@@ -134,6 +134,11 @@ pages = [
         icon=":material/query_stats:",
     ),
     st.Page(
+        "app_pages/youtube_analyzer.py",
+        title="Analyze YouTube comments",
+        icon=":material/youtube_activity:",
+    ),
+    st.Page(
         "app_pages/chat_agent.py",
         title="Ask the AI agent",
         icon=":material/forum:",

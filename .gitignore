@@ -14,4 +14,4 @@ models_saved/
 models/
 reports/trainer_out/
 *.ipynb_checkpoints/
-.db
+.db.vscode/
